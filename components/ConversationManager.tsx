@@ -1,13 +1,15 @@
 import React, { useContext, useState, useRef, useEffect } from 'react';
 import { AppContext } from '../contexts/AppContext';
-import { exportToMarkdown } from '../utils/export';
+import { exportToMarkdown, exportToJson, parseMarkdownToConversation } from '../utils/export';
 
 export const ConversationManager: React.FC = () => {
-    const { conversations, currentConversationId, createNewConversation, loadConversation, deleteConversation, renameConversation, messages } = useContext(AppContext);
+    const { conversations, currentConversationId, createNewConversation, loadConversation, deleteConversation, renameConversation, messages, importConversation } = useContext(AppContext);
     const [isOpen, setIsOpen] = useState(false);
     const [renamingId, setRenamingId] = useState<string | null>(null);
     const [renameText, setRenameText] = useState('');
     const dropdownRef = useRef<HTMLDivElement>(null);
+    const importFileRef = useRef<HTMLInputElement>(null);
+    const importMarkdownFileRef = useRef<HTMLInputElement>(null);
 
     const sortedConversations = [...conversations].sort((a, b) => b.lastModified - a.lastModified);
 
@@ -41,6 +43,89 @@ export const ConversationManager: React.FC = () => {
         exportToMarkdown(messages, currentTitle);
         setIsOpen(false);
     }
+
+    const handleExportJson = () => {
+        const currentTitle = conversations.find(c => c.id === currentConversationId)?.title || 'Untitled Conversation';
+        exportToJson(messages, currentTitle);
+        setIsOpen(false);
+    }
+
+    const handleImportJson = () => {
+        importFileRef.current?.click();
+        setIsOpen(false);
+    };
+
+    const handleFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const result = event.target?.result;
+                if (typeof result !== 'string') {
+                    throw new Error("File content is not readable as text.");
+                }
+                const data = JSON.parse(result);
+                // Basic validation
+                if (data && Array.isArray(data.messages) && typeof data.title === 'string') {
+                    importConversation(data);
+                } else {
+                    alert('Invalid JSON format. File must contain a "title" (string) and "messages" (array).');
+                }
+            } catch (error) {
+                console.error("Failed to import JSON:", error);
+                alert(`Failed to import conversation: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
+        };
+        reader.onerror = () => {
+            alert('Error reading the file.');
+        };
+        reader.readAsText(file);
+
+        // Reset the input value to allow importing the same file again
+        if (e.target) {
+            e.target.value = '';
+        }
+    };
+
+    const handleImportMarkdown = () => {
+        importMarkdownFileRef.current?.click();
+        setIsOpen(false);
+    };
+
+    const handleMarkdownFileSelected = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            try {
+                const result = event.target?.result;
+                if (typeof result !== 'string') {
+                    throw new Error("File content is not readable as text.");
+                }
+                const conversationData = parseMarkdownToConversation(result);
+                
+                if (conversationData && Array.isArray(conversationData.messages) && typeof conversationData.title === 'string' && conversationData.messages.length > 0) {
+                    importConversation(conversationData);
+                } else {
+                    alert('Invalid or empty Markdown file. Could not import conversation.');
+                }
+            } catch (error) {
+                console.error("Failed to import Markdown:", error);
+                alert(`Failed to import conversation: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
+        };
+        reader.onerror = () => {
+            alert('Error reading the file.');
+        };
+        reader.readAsText(file);
+
+        if (e.target) {
+            e.target.value = '';
+        }
+    };
     
     return (
         <div className="relative" ref={dropdownRef}>
@@ -57,9 +142,21 @@ export const ConversationManager: React.FC = () => {
                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clipRule="evenodd" /></svg>
                             New Session
                          </button>
+                         <button onClick={handleImportJson} className="w-full text-left text-sm px-3 py-2 rounded-md hover:bg-slate-700 dark:hover:bg-slate-700 light:hover:bg-slate-100 transition-colors flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M5.5 13a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 13H11V9.414l-1.293 1.293a1 1 0 01-1.414-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L13 9.414V13h-2.5z" /><path d="M3.5 14.5a1 1 0 011-1h11a1 1 0 110 2h-11a1 1 0 01-1-1z" /></svg>
+                            Import from .JSON file
+                         </button>
+                         <button onClick={handleImportMarkdown} className="w-full text-left text-sm px-3 py-2 rounded-md hover:bg-slate-700 dark:hover:bg-slate-700 light:hover:bg-slate-100 transition-colors flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path d="M5.5 13a3.5 3.5 0 01-.369-6.98 4 4 0 117.753-1.977A4.5 4.5 0 1113.5 13H11V9.414l-1.293 1.293a1 1 0 01-1.414-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L13 9.414V13h-2.5z" /><path d="M3.5 14.5a1 1 0 011-1h11a1 1 0 110 2h-11a1 1 0 01-1-1z" /></svg>
+                            Import from Markdown file
+                         </button>
                          <button onClick={handleExport} className="w-full text-left text-sm px-3 py-2 rounded-md hover:bg-slate-700 dark:hover:bg-slate-700 light:hover:bg-slate-100 transition-colors flex items-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
                             Export as Markdown
+                         </button>
+                         <button onClick={handleExportJson} className="w-full text-left text-sm px-3 py-2 rounded-md hover:bg-slate-700 dark:hover:bg-slate-700 light:hover:bg-slate-100 transition-colors flex items-center gap-2">
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M12.316 3.051a1 1 0 01.633 1.265l-4 12a1 1 0 11-1.898-.632l4-12a1 1 0 011.265-.633zM5.707 6.293a1 1 0 010 1.414L3.414 10l2.293 2.293a1 1 0 11-1.414 1.414l-3-3a1 1 0 010-1.414l3-3a1 1 0 011.414 0zm8.586 0a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 11-1.414-1.414L16.586 10l-2.293-2.293a1 1 0 010-1.414z" clipRule="evenodd" /></svg>
+                            Save as .JSON file
                          </button>
                     </div>
                     <hr className="border-slate-700 dark:border-slate-700 light:border-slate-200"/>
@@ -91,6 +188,20 @@ export const ConversationManager: React.FC = () => {
                     </div>
                 </div>
             )}
+            <input
+                type="file"
+                ref={importFileRef}
+                className="hidden"
+                accept=".json"
+                onChange={handleFileSelected}
+            />
+             <input
+                type="file"
+                ref={importMarkdownFileRef}
+                className="hidden"
+                accept=".md,.markdown"
+                onChange={handleMarkdownFileSelected}
+            />
         </div>
     );
 };

@@ -312,8 +312,10 @@ const App: React.FC = () => {
       } catch (jsonParseError) {
         // Fallback to string matching for non-JSON errors or unexpected JSON structure
         const lowerCaseError = errorMessage.toLowerCase();
-        if (lowerCaseError.includes('api key')) {
-          displayError = '**System Error: Invalid API Key**\n\nPlease check your system configuration. The API key is either missing, invalid, or has been revoked.';
+        if (lowerCaseError.includes('api key not configured')) {
+          displayError = '**System Error: API Key Not Configured**\n\nPlease go to Settings and add a valid Gemini API key to continue.';
+        } else if (lowerCaseError.includes('api key')) {
+          displayError = '**System Error: Invalid API Key**\n\nPlease check your system configuration. The active API key is either missing, invalid, or has been revoked.';
         } else if (lowerCaseError.includes('quota') || lowerCaseError.includes('429') || lowerCaseError.includes('resource_exhausted')) {
           displayError = '**System Error: API Quota or Rate Limit Exceeded**\n\nYour request could not be processed due to API limits. Please check your plan and billing details with Google AI.\n\nFor more information, you can visit the [Google AI Rate Limits documentation](https://ai.google.dev/gemini-api/docs/rate-limits).\n\n*NEXUS is aware of this limit and will evolve to handle it more gracefully.*';
         } else {

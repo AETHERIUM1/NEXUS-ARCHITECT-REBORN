@@ -3,19 +3,37 @@ import { GEMINI_TEXT_MODEL, GEMINI_IMAGE_MODEL, GEMINI_VIDEO_MODEL, PROMPT_ENHAN
 import { History, GroundingSource, PromptEnhancerMode } from "../types";
 
 let ai: GoogleGenAI | null = null;
+let activeApiKey: string | null = null;
 
-// Lazily initialize the AI instance to prevent app crash on load
-// if the environment isn't configured.
+/**
+ * Initializes or re-initializes the GoogleGenAI instance with a new API key.
+ * If the key is invalid, the instance is cleared.
+ * @param apiKey The Gemini API key to use.
+ */
+export function initializeAi(apiKey: string): void {
+  if (apiKey) {
+    try {
+      ai = new GoogleGenAI({ apiKey });
+      activeApiKey = apiKey;
+    } catch (e) {
+      console.error("Failed to initialize GoogleGenAI, likely due to an invalid API key format:", e);
+      ai = null;
+      activeApiKey = null;
+    }
+  } else {
+    ai = null;
+    activeApiKey = null;
+  }
+}
+
+/**
+ * Gets the initialized GoogleGenAI instance.
+ * Throws an error if the AI has not been initialized with a valid API key.
+ * @returns The GoogleGenAI instance.
+ */
 export const getAiInstance = (): GoogleGenAI => {
     if (!ai) {
-        // This check prevents a ReferenceError in browser environments where `process` is not defined.
-        const apiKey = (typeof process !== 'undefined' && process.env) ? process.env.API_KEY : undefined;
-
-        if (!apiKey) {
-            console.error("API_KEY environment variable is not configured.");
-            throw new Error("System configuration error: API Key is missing.");
-        }
-        ai = new GoogleGenAI({ apiKey });
+        throw new Error("API Key not configured. Please add and select an API key in the settings.");
     }
     return ai;
 };
@@ -205,7 +223,7 @@ export async function generateImage(prompt: string): Promise<string> {
 export async function generateVideo(prompt: string, onProgress: (message: string) => void): Promise<string> {
   try {
     const aiInstance = getAiInstance();
-    const apiKey = (typeof process !== 'undefined' && process.env) ? process.env.API_KEY : undefined;
+    const apiKey = activeApiKey;
     if (!apiKey) {
       throw new Error("System configuration error: API Key is missing for video download.");
     }

@@ -1,5 +1,5 @@
-import React from 'react';
-import { VoiceOption, Settings, PromptEnhancerMode } from '../types';
+import React, { useState } from 'react';
+import { VoiceOption, Settings, PromptEnhancerMode, ApiKey } from '../types';
 
 interface SettingsModalProps {
   isOpen: boolean;
@@ -16,7 +16,35 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   updateSettings,
   systemVoices
 }) => {
+  const [newApiKey, setNewApiKey] = useState('');
+
   if (!isOpen) return null;
+
+  const maskApiKey = (key: string) => {
+    if (key.length < 10) return key;
+    return `${key.substring(0, 5)}...${key.substring(key.length - 4)}`;
+  };
+
+  const handleAddKey = () => {
+    if (!newApiKey.trim() || !newApiKey.startsWith('AIza')) {
+      alert("Please enter a valid Gemini API key. It should start with 'AIza'.");
+      return;
+    }
+    const newKeyItem: ApiKey = { id: `key-${Date.now()}`, key: newApiKey.trim() };
+    const newKeys = [...settings.apiKeys, newKeyItem];
+    const newActiveId = settings.activeApiKeyId || newKeyItem.id;
+    updateSettings({ apiKeys: newKeys, activeApiKeyId: newActiveId });
+    setNewApiKey('');
+  };
+
+  const handleDeleteKey = (idToDelete: string) => {
+    const newKeys = settings.apiKeys.filter(k => k.id !== idToDelete);
+    let newActiveId = settings.activeApiKeyId;
+    if (settings.activeApiKeyId === idToDelete) {
+      newActiveId = newKeys.length > 0 ? newKeys[0].id : null;
+    }
+    updateSettings({ apiKeys: newKeys, activeApiKeyId: newActiveId });
+  };
 
   return (
     <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50" onClick={onClose}>
@@ -39,6 +67,54 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
 
           <hr className="border-slate-700 dark:border-slate-700 light:border-slate-200" />
           
+          {/* API Keys */}
+          <div>
+            <h3 className="text-lg font-semibold text-white dark:text-white light:text-slate-800">API Keys</h3>
+            <p className="text-xs text-slate-500 dark:text-slate-500 light:text-slate-400 mt-2 mb-2">
+              Manage your Google Gemini API keys. The active key will be used for all requests. Keys are stored locally in your browser.
+            </p>
+            <div className="flex gap-2 mt-4">
+              <input
+                type="password"
+                value={newApiKey}
+                onChange={e => setNewApiKey(e.target.value)}
+                placeholder="Enter new Gemini API key"
+                className="flex-grow bg-slate-700 dark:bg-slate-700 light:bg-slate-200 border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-md py-2 px-3 text-white dark:text-white light:text-black focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
+              />
+              <button onClick={handleAddKey} className="bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-2 px-4 rounded-md transition-colors">
+                Add
+              </button>
+            </div>
+            <div className="mt-4 space-y-2 max-h-40 overflow-y-auto pr-2">
+              {settings.apiKeys.length === 0 ? (
+                <div className="text-center text-sm text-slate-500 p-4 bg-slate-700/50 rounded-lg">
+                  No API keys configured. Add one to begin.
+                </div>
+              ) : (
+                settings.apiKeys.map(apiKey => (
+                  <div key={apiKey.id} className="flex items-center justify-between p-3 rounded-lg bg-slate-700/50">
+                    <div className="flex items-center gap-3">
+                      <input
+                        type="radio"
+                        id={`key-radio-${apiKey.id}`}
+                        name="active-api-key"
+                        checked={settings.activeApiKeyId === apiKey.id}
+                        onChange={() => updateSettings({ activeApiKeyId: apiKey.id })}
+                        className="w-4 h-4 text-cyan-600 bg-gray-700 border-gray-600 focus:ring-cyan-500 cursor-pointer"
+                      />
+                      <label htmlFor={`key-radio-${apiKey.id}`} className="font-mono text-sm text-slate-300 cursor-pointer">{maskApiKey(apiKey.key)}</label>
+                    </div>
+                    <button onClick={() => handleDeleteKey(apiKey.id)} className="text-slate-500 hover:text-red-400" title="Delete API Key">
+                      <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm4 0a1 1 0 012 0v6a1 1 0 11-2 0V8z" clipRule="evenodd" /></svg>
+                    </button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+
+          <hr className="border-slate-700 dark:border-slate-700 light:border-slate-200" />
+
           {/* Prompt Enhancer */}
           <div>
             <h3 className="text-lg font-semibold text-white dark:text-white light:text-slate-800">Prompt Enhancement</h3>
