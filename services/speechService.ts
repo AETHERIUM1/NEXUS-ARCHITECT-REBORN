@@ -102,8 +102,8 @@ export async function speak(
   if (onStart) utterance.onstart = onStart;
   if (onEnd) utterance.onend = onEnd;
   // Ensure onEnd is called even if speech fails
-  utterance.onerror = () => {
-    console.error("Speech synthesis error for utterance:", utteranceText);
+  utterance.onerror = (event: SpeechSynthesisErrorEvent) => {
+    console.error(`Speech synthesis error for utterance: "${utteranceText}" | Error: ${event.error}`);
     onEnd?.();
   };
 
@@ -124,5 +124,37 @@ export function playSound(soundUri: string | null) {
     audio.play().catch(e => console.error("Error playing notification sound:", e));
   } catch (e) {
     console.error("Failed to play sound URI:", e);
+  }
+}
+
+/**
+ * Primes the speech synthesis engine to address browser autoplay policies.
+ * This should be called after the first user interaction (e.g., a click).
+ * It speaks a silent utterance to "unlock" the API.
+ */
+export function primeSpeechEngine() {
+  if (typeof window.speechSynthesis === 'undefined') {
+    return;
+  }
+  
+  // Trigger voice loading if it hasn't started yet.
+  initializeVoices();
+  
+  // If the engine is already active, no need to prime.
+  if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+    return;
+  }
+  
+  // Clear any previous state just in case.
+  window.speechSynthesis.cancel();
+
+  // A silent utterance with a single space can reliably wake the engine.
+  const utterance = new SpeechSynthesisUtterance(' ');
+  utterance.volume = 0;
+  
+  try {
+    window.speechSynthesis.speak(utterance);
+  } catch (e) {
+    console.warn("Speech engine priming failed, this may be expected.", e);
   }
 }

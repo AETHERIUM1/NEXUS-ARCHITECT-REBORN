@@ -1,6 +1,7 @@
 import React, { useContext } from 'react';
 import { AppContext } from '../contexts/AppContext';
 import { ActiveView } from '../types';
+import { primeSpeechEngine } from '../services/speechService';
 
 const FeatureCard: React.FC<{ icon: string; title: string; description: string; }> = ({ icon, title, description }) => (
     <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 transform hover:scale-105 transition-transform duration-300 hover:border-cyan-400/50">
@@ -22,6 +23,7 @@ export const LandingPage: React.FC = () => {
     const { setActiveView } = useContext(AppContext);
 
     const handleEnter = () => {
+        primeSpeechEngine();
         setActiveView(ActiveView.CHAT);
     };
 
