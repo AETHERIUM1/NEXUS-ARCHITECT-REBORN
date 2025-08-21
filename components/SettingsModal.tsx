@@ -68,23 +68,11 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-white dark:text-white light:text-slate-800 mb-2">AI Voice</h3>
             
-            <div className="flex items-center justify-between">
-              <label htmlFor="enable-voice" className="block text-sm font-medium">Enable Voice Output</label>
-              <button
-                  id="enable-voice"
-                  role="switch"
-                  aria-checked={settings.enableVoice}
-                  onClick={() => updateSettings({ enableVoice: !settings.enableVoice })}
-                  className={`relative inline-flex flex-shrink-0 h-6 w-11 border-2 border-transparent rounded-full cursor-pointer transition-colors ease-in-out duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 ${settings.enableVoice ? 'bg-cyan-600' : 'bg-slate-600'}`}
-              >
-                  <span
-                      aria-hidden="true"
-                      className={`inline-block h-5 w-5 rounded-full bg-white shadow-lg transform ring-0 transition ease-in-out duration-200 ${settings.enableVoice ? 'translate-x-5' : 'translate-x-0'}`}
-                  />
-              </button>
-            </div>
-            
-            <div className={`transition-opacity duration-300 ${!settings.enableVoice ? 'opacity-50 pointer-events-none' : ''}`}>
+            <p className="text-xs text-slate-500 dark:text-slate-500 light:text-slate-400">
+              Voice output is permanently enabled. You can adjust the personality and delivery below.
+            </p>
+
+            <div>
               <div>
                 <label htmlFor="voice-select" className="block text-sm font-medium mb-2">
                   Voice Personality

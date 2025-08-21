@@ -48,7 +48,6 @@ export type PromptEnhancerMode = 'off' | 'standard' | 'creative' | 'technical';
 export interface Settings {
   theme: 'light' | 'dark';
   voiceURI: string | null;
-  enableVoice: boolean;
   notificationSoundURI: string | null;
   speechRate: number;
   speechPitch: number;

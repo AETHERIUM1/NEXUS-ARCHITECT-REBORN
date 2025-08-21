@@ -60,7 +60,7 @@ export async function speak(
     onStart?: () => void,
     onEnd?: () => void
 ): Promise<void> {
-  if (!text.trim() || typeof window.speechSynthesis === 'undefined') {
+  if (!text || !text.trim() || typeof window.speechSynthesis === 'undefined') {
     onEnd?.();
     return;
   }

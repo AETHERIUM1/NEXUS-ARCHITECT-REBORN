@@ -75,7 +75,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     // Speak initial message if it's the only one and hasn't been spoken
-    if (messages.length === 1 && !greetingSpokenRef.current && activeView === ActiveView.CHAT && settings.enableVoice) {
+    if (messages.length === 1 && !greetingSpokenRef.current && activeView === ActiveView.CHAT) {
       greetingSpokenRef.current = true;
       setTimeout(() => speak(
         messages[0].text, 
@@ -166,9 +166,8 @@ const App: React.FC = () => {
         const imageUrl = await generateImage(imageDescription);
         const modelMessageText = `Generated image: ${imageDescription}`;
         updateLastMessage({ text: modelMessageText, imageUrl });
-        if (settings.enableVoice) {
-            speak(modelMessageText, settings.voiceURI, settings.speechRate, settings.speechPitch, () => setAvatarState('speaking'), () => setAvatarState('idle'));
-        }
+        speak(modelMessageText, settings.voiceURI, settings.speechRate, settings.speechPitch, () => setAvatarState('speaking'), () => setAvatarState('idle'));
+
       } else if (videoKeyword && !hasFileUploads) {
         const videoDescription = extractDescription(executedPrompt, videoKeyword);
         
@@ -179,9 +178,8 @@ const App: React.FC = () => {
         const videoUrl = await generateVideo(videoDescription, onProgress);
         const modelMessageText = `Generated video: ${videoDescription}`;
         updateLastMessage({ text: modelMessageText, videoUrl });
-        if (settings.enableVoice) {
-            speak(modelMessageText, settings.voiceURI, settings.speechRate, settings.speechPitch, () => setAvatarState('speaking'), () => setAvatarState('idle'));
-        }
+        speak(modelMessageText, settings.voiceURI, settings.speechRate, settings.speechPitch, () => setAvatarState('speaking'), () => setAvatarState('idle'));
+
       } else {
         const history: History[] = messages
           .slice(0, -2) // Exclude user's new prompt and the empty model message
@@ -267,7 +265,7 @@ const App: React.FC = () => {
         }
         // --- END OF FUNCTION CALL HANDLING ---
 
-        if (fullText && settings.enableVoice) {
+        if (fullText) {
           playSound(settings.notificationSoundURI);
           speak(fullText, settings.voiceURI, settings.speechRate, settings.speechPitch, () => setAvatarState('speaking'), () => setAvatarState('idle'));
         }
@@ -321,9 +319,8 @@ const App: React.FC = () => {
 
       setError(displayError);
       updateLastMessage({ text: displayError });
-      if (settings.enableVoice) {
-        speak(displayError, settings.voiceURI, settings.speechRate, settings.speechPitch, () => setAvatarState('speaking'), () => setAvatarState('idle'));
-      }
+      speak(displayError, settings.voiceURI, settings.speechRate, settings.speechPitch, () => setAvatarState('speaking'), () => setAvatarState('idle'));
+
     } finally {
       setIsLoading(false);
       stopGenerationRef.current = false;

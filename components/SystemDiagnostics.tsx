@@ -63,7 +63,7 @@ export const SystemDiagnostics: React.FC = () => {
         <div className="space-y-4 p-4 bg-slate-900/50 rounded-lg">
            <h3 className="font-bold text-lg text-white border-b border-slate-700 pb-2">Configuration</h3>
           <StatusPill label="Theme" value={settings.theme} />
-          <StatusPill label="Voice Output" value={settings.enableVoice ? 'Enabled' : 'Disabled'} status={settings.enableVoice ? 'ok' : 'neutral'}/>
+          <StatusPill label="Voice Always On" value={true} status={'ok'}/>
           <StatusPill label="Prompt Enhancer" value={settings.promptEnhancerMode} status={settings.promptEnhancerMode !== 'off' ? 'ok' : 'neutral'} />
         </div>
 

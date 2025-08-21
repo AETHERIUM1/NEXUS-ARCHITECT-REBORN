@@ -53,7 +53,6 @@ export const AppContext = createContext<AppContextType>(null!);
 const DEFAULT_SETTINGS: Settings = {
   theme: 'dark',
   voiceURI: null,
-  enableVoice: true,
   notificationSoundURI: null,
   speechRate: 1,
   speechPitch: 1.1,
