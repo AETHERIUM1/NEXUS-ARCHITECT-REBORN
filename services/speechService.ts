@@ -3,8 +3,12 @@ import { VoiceOption } from '../types';
 let voices: SpeechSynthesisVoice[] = [];
 let voicesPromise: Promise<SpeechSynthesisVoice[]> | null = null;
 let isEnginePrimed = false;
-let primeTimeout: number | null = null;
 
+/**
+ * Initializes and retrieves the list of available speech synthesis voices.
+ * This function is memoized to prevent re-running the logic unnecessarily.
+ * @returns A promise that resolves to an array of available voices.
+ */
 function initializeVoices(): Promise<SpeechSynthesisVoice[]> {
   if (voicesPromise) {
     return voicesPromise;
@@ -43,43 +47,22 @@ function initializeVoices(): Promise<SpeechSynthesisVoice[]> {
 }
 
 /**
- * Primes the speech synthesis engine. Safe to call multiple times.
+ * Primes the speech synthesis engine to reduce latency on the first speech request.
+ * This is safe to call multiple times.
  */
 export function primeSpeechEngine() {
   if (typeof window.speechSynthesis === 'undefined' || isEnginePrimed) {
     return;
   }
   
-  // The act of getting voices often primes the engine.
+  // On many browsers, the act of getting voices is enough to "wake up" the engine.
   initializeVoices();
   
-  // Cancel anything that might be lingering from a page reload.
+  // A single cancel() on the first prime can help clear any stale state from a 
+  // previous page session or a browser bug, without queuing a new utterance.
   window.speechSynthesis.cancel(); 
-  const utterance = new SpeechSynthesisUtterance(' ');
-  utterance.volume = 0;
   
-  const onPrimeEnd = () => {
-    if (primeTimeout) clearTimeout(primeTimeout);
-    isEnginePrimed = true;
-  };
-
-  utterance.onend = onPrimeEnd;
-  utterance.onerror = (e) => {
-    console.warn("Speech engine priming utterance failed, but will proceed.", e);
-    onPrimeEnd();
-  };
-
-  try {
-    window.speechSynthesis.speak(utterance);
-  } catch (e) {
-    console.warn("Speech engine priming failed with an error.", e);
-    onPrimeEnd();
-  }
-  
-  primeTimeout = window.setTimeout(() => {
-      console.warn("Priming timeout reached. Forcing engine state to primed.");
-      onPrimeEnd();
-  }, 350);
+  isEnginePrimed = true;
 }
 
 
@@ -89,8 +72,7 @@ export async function getVoices(): Promise<VoiceOption[]> {
 }
 
 /**
- * Speaks the given text, interrupting any currently playing speech.
- * This function is designed to be robust against browser race conditions.
+ * Speaks the given text, definitively fixing the "interrupted" race condition.
  */
 export function speak(
     text: string, 
@@ -105,14 +87,12 @@ export function speak(
         return;
     }
 
-    // This function contains the logic to create and speak the utterance.
     const doSpeak = (allVoices: SpeechSynthesisVoice[]) => {
+        // Find the desired voice or a suitable fallback
         let voiceToUse: SpeechSynthesisVoice | undefined | null = null;
-        
         if (voiceURI) {
             voiceToUse = allVoices.find(v => v.voiceURI === voiceURI);
         } 
-      
         if (!voiceToUse) {
             const femaleVoiceKeywords = ['female', 'zira', 'samantha', 'susan', 'tessa', 'fiona'];
             const isFemale = (v: SpeechSynthesisVoice) => femaleVoiceKeywords.some(keyword => v.name.toLowerCase().includes(keyword));
@@ -128,34 +108,31 @@ export function speak(
 
         if (onStart) utterance.onstart = onStart;
         if (onEnd) utterance.onend = onEnd;
-        
         utterance.onerror = (event: SpeechSynthesisErrorEvent) => {
             console.error(`Speech synthesis error for utterance: "${utteranceText}" | Error: ${event.error}`);
-            onEnd?.(); // Ensure onEnd is always called
+            onEnd?.();
         };
-
-        if (voiceToUse) {
-            utterance.voice = voiceToUse;
-        }
+        if (voiceToUse) utterance.voice = voiceToUse;
         utterance.rate = rate;
         utterance.pitch = pitch;
 
-        // **THE DEFINITIVE FIX**
-        // 1. Immediately cancel any ongoing or pending speech.
+        // --- THE DEFINITIVE FIX FOR THE "INTERRUPTED" ERROR ---
+        // This race condition occurs when `speak()` is called before the engine has
+        // processed a `cancel()` command. The solution is to always cancel, then
+        // wait a moment before speaking.
+        
+        // 1. Cancel anything currently in the speech queue.
         window.speechSynthesis.cancel();
         
-        // 2. Introduce a small delay before speaking the new utterance.
-        // This gives the browser engine time to process the 'cancel' command
-        // and prevents the "interrupted" race condition error.
+        // 2. Use a short, non-blocking delay to allow the 'cancel' command to complete.
         setTimeout(() => {
             window.speechSynthesis.speak(utterance);
         }, 50);
     };
     
-    // Get the list of voices and then execute the speaking logic.
     initializeVoices().then(doSpeak).catch(err => {
         console.error("Could not initialize voices for speaking:", err);
-        onEnd?.(); // Ensure onEnd is called on voice initialization failure
+        onEnd?.();
     });
 }
 
