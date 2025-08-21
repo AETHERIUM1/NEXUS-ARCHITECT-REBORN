@@ -45,11 +45,6 @@ export interface VoiceOption {
 
 export type PromptEnhancerMode = 'off' | 'standard' | 'creative' | 'technical';
 
-export interface ApiKey {
-  id: string;
-  key: string;
-}
-
 export interface Settings {
   theme: 'light' | 'dark';
   voiceURI: string | null;
@@ -58,8 +53,6 @@ export interface Settings {
   speechRate: number;
   speechPitch: number;
   promptEnhancerMode: PromptEnhancerMode;
-  apiKeys: ApiKey[];
-  activeApiKeyId: string | null;
 }
 
 export interface Conversation {

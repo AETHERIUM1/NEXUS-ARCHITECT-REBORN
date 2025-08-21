@@ -2,41 +2,20 @@ import { GoogleGenAI, GenerateVideosOperation, FunctionDeclaration } from "@goog
 import { GEMINI_TEXT_MODEL, GEMINI_IMAGE_MODEL, GEMINI_VIDEO_MODEL, PROMPT_ENHANCER_SYSTEM_PROMPT } from '../constants';
 import { History, GroundingSource, PromptEnhancerMode } from "../types";
 
-let ai: GoogleGenAI | null = null;
-let activeApiKey: string | null = null;
-
-/**
- * Initializes or re-initializes the GoogleGenAI instance with a new API key.
- * If the key is invalid, the instance is cleared.
- * @param apiKey The Gemini API key to use.
- */
-export function initializeAi(apiKey: string): void {
-  if (apiKey) {
-    try {
-      ai = new GoogleGenAI({ apiKey });
-      activeApiKey = apiKey;
-    } catch (e) {
-      console.error("Failed to initialize GoogleGenAI, likely due to an invalid API key format:", e);
-      ai = null;
-      activeApiKey = null;
-    }
-  } else {
-    ai = null;
-    activeApiKey = null;
-  }
+if (!process.env.API_KEY) {
+  throw new Error("API_KEY environment variable not set. Please configure it before running the application.");
 }
+
+const ai: GoogleGenAI = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
 /**
  * Gets the initialized GoogleGenAI instance.
- * Throws an error if the AI has not been initialized with a valid API key.
  * @returns The GoogleGenAI instance.
  */
 export const getAiInstance = (): GoogleGenAI => {
-    if (!ai) {
-        throw new Error("API Key not configured. Please add and select an API key in the settings.");
-    }
     return ai;
 };
+
 
 interface StreamChunk {
   text: string;
@@ -223,7 +202,7 @@ export async function generateImage(prompt: string): Promise<string> {
 export async function generateVideo(prompt: string, onProgress: (message: string) => void): Promise<string> {
   try {
     const aiInstance = getAiInstance();
-    const apiKey = activeApiKey;
+    const apiKey = process.env.API_KEY;
     if (!apiKey) {
       throw new Error("System configuration error: API Key is missing for video download.");
     }

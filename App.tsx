@@ -75,18 +75,16 @@ const App: React.FC = () => {
 
   useEffect(() => {
     // Speak initial message if it's the only one and hasn't been spoken
-    if (messages.length === 1 && !greetingSpokenRef.current && activeView === ActiveView.CHAT) {
+    if (messages.length === 1 && !greetingSpokenRef.current && activeView === ActiveView.CHAT && settings.enableVoice) {
       greetingSpokenRef.current = true;
-      if (settings.enableVoice) {
-          setTimeout(() => speak(
-            messages[0].text, 
-            settings.voiceURI, 
-            settings.speechRate, 
-            settings.speechPitch,
-            () => setAvatarState('speaking'),
-            () => setAvatarState('idle')
-          ), 500);
-      }
+      setTimeout(() => speak(
+        messages[0].text, 
+        settings.voiceURI, 
+        settings.speechRate, 
+        settings.speechPitch,
+        () => setAvatarState('speaking'),
+        () => setAvatarState('idle')
+      ), 500);
     }
   }, [messages, settings, activeView, setAvatarState]);
 
@@ -269,11 +267,9 @@ const App: React.FC = () => {
         }
         // --- END OF FUNCTION CALL HANDLING ---
 
-        if (fullText) {
+        if (fullText && settings.enableVoice) {
           playSound(settings.notificationSoundURI);
-          if (settings.enableVoice) {
-            speak(fullText, settings.voiceURI, settings.speechRate, settings.speechPitch, () => setAvatarState('speaking'), () => setAvatarState('idle'));
-          }
+          speak(fullText, settings.voiceURI, settings.speechRate, settings.speechPitch, () => setAvatarState('speaking'), () => setAvatarState('idle'));
         }
       }
     } catch (err: any) {
@@ -313,7 +309,7 @@ const App: React.FC = () => {
         // Fallback to string matching for non-JSON errors or unexpected JSON structure
         const lowerCaseError = errorMessage.toLowerCase();
         if (lowerCaseError.includes('api key not configured')) {
-          displayError = '**System Error: API Key Not Configured**\n\nPlease go to Settings and add a valid Gemini API key to continue.';
+          displayError = '**System Error: API Key Not Configured**\n\nThe application is missing the required API key in its environment configuration. Please contact the administrator.';
         } else if (lowerCaseError.includes('api key')) {
           displayError = '**System Error: Invalid API Key**\n\nPlease check your system configuration. The active API key is either missing, invalid, or has been revoked.';
         } else if (lowerCaseError.includes('quota') || lowerCaseError.includes('429') || lowerCaseError.includes('resource_exhausted')) {

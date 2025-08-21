@@ -1,8 +1,7 @@
 import React, { createContext, useState, useCallback, useRef, useEffect } from 'react';
-import { Message, Settings, Conversation, PromptEnhancerMode, ActiveView, AvatarState, ApiKey } from '../types';
+import { Message, Settings, Conversation, PromptEnhancerMode, ActiveView, AvatarState } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { INITIAL_MESSAGE } from '../constants';
-import { initializeAi } from '../services/geminiService';
 
 interface AppContextType {
   // State
@@ -59,8 +58,6 @@ const DEFAULT_SETTINGS: Settings = {
   speechRate: 1,
   speechPitch: 1.1,
   promptEnhancerMode: 'off',
-  apiKeys: [],
-  activeApiKeyId: null,
 };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -80,12 +77,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [avatarState, setAvatarState] = useState<AvatarState>('idle');
   
   const stopGenerationRef = useRef<boolean>(false);
-
-  // Effect to initialize the AI service when the active API key changes
-  useEffect(() => {
-    const activeApiKey = settings.apiKeys.find(k => k.id === settings.activeApiKeyId)?.key;
-    initializeAi(activeApiKey || '');
-  }, [settings.apiKeys, settings.activeApiKeyId]);
 
   // Load current conversation from storage on startup
   useEffect(() => {
