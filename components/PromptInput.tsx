@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useLayoutEffect, useContext } from 'react';
 import { AppContext } from '../contexts/AppContext';
 import { PromptEnhancerDropdown } from './PromptEnhancerDropdown';
+import { primeSpeechEngine } from '../services/speechService';
 
 interface PromptInputProps {
   onSend: (prompt: string) => void;
@@ -106,6 +107,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({ onSend, isListening, s
 
 
   const handleToggleListening = useCallback(() => {
+    primeSpeechEngine(); // Ensure speech engine is ready
     if (!recognitionRef.current || isLoading) return;
     if (isListening) {
       recognitionRef.current.stop();

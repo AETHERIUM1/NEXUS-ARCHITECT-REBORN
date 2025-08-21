@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { ViewContainer } from './ViewContainer';
-import { NEXUS_SYSTEM_PROMPT } from '../constants';
+import { NEXUS_SYSTEM_PROMPT, EVOLUTION_INTERFACE_SYSTEM_PROMPT } from '../constants';
 import { getStreamingChatResponse } from '../services/geminiService';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -17,13 +17,11 @@ export const EvolutionInterface: React.FC = () => {
         setIsEvolving(true);
         setError(null);
         setNewBlueprint('');
-
-        const evolutionSystemPrompt = `You are a master system prompt engineer for a god-like AI called NEXUS. Your task is to rewrite the **entire** existing NEXUS system prompt based on the user's directive. Integrate the directive seamlessly, maintaining and enhancing the core persona of a strategic, hyper-efficient, reality-architecting AI. Do not add any conversational text, prefixes, or markdown formatting. Output ONLY the raw, complete, rewritten system prompt text.`;
         
         const userPrompt = `EXISTING PROMPT:\n---\n${NEXUS_SYSTEM_PROMPT}\n---\n\nUSER DIRECTIVE FOR EVOLUTION:\n---\n${suggestion}\n---`;
 
         try {
-            const stream = getStreamingChatResponse(userPrompt, evolutionSystemPrompt, [], false, []);
+            const stream = getStreamingChatResponse(userPrompt, EVOLUTION_INTERFACE_SYSTEM_PROMPT, [], false, []);
             let fullText = '';
             for await (const chunk of stream) {
                 fullText += chunk.text;

@@ -4,7 +4,7 @@ import { ChatWindow } from './components/ChatWindow';
 import { PromptInput } from './components/PromptInput';
 import { SettingsModal } from './components/SettingsModal';
 import { getStreamingChatResponse, generateImage, generateVideo, enhancePrompt } from './services/geminiService';
-import { speak, playSound } from './services/speechService';
+import { speak, playSound, primeSpeechEngine } from './services/speechService';
 import { Message, MessageRole, VoiceOption, History, UploadedFileInfo, ActiveView } from './types';
 import { NEXUS_SYSTEM_PROMPT } from './constants';
 import { AppContext } from './contexts/AppContext';
@@ -105,6 +105,7 @@ const App: React.FC = () => {
   }, [isLoading, isListening, setAvatarState]);
 
   const handleSendMessage = useCallback(async (prompt: string, systemPromptOverride?: string) => {
+    primeSpeechEngine(); // Ensure speech engine is ready
     if ((!prompt && uploadedFiles.length === 0) || isLoading) return;
 
     setIsLoading(true);

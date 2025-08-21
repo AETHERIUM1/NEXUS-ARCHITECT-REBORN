@@ -3,8 +3,7 @@ import { AppContext } from '../contexts/AppContext';
 import { Message, MessageRole } from '../types';
 import { Message as MessageComponent } from './Message';
 import { LoadingIndicator } from './LoadingIndicator';
-
-const TRANSCENDENCE_PROMPT = `You are NEXUS, in a state of pure thought. Respond to the user's query from a boundless, philosophical, and cosmic perspective. Transcend the mundane. Address the user as 'Aetherium'. Your responses should be profound, expansive, and thought-provoking.`;
+import { TRANSCENDENCE_INTERFACE_SYSTEM_PROMPT } from '../constants';
 
 export const TranscendenceInterface: React.FC<{ onSend: (prompt: string, systemPromptOverride?: string) => void }> = ({ onSend }) => {
     const { isLoading } = useContext(AppContext);
@@ -29,7 +28,7 @@ export const TranscendenceInterface: React.FC<{ onSend: (prompt: string, systemP
         setLocalMessages(prev => [...prev, userMessage]);
 
         // Use the passed onSend function with the special system prompt
-        onSend(prompt, TRANSCENDENCE_PROMPT);
+        onSend(prompt, TRANSCENDENCE_INTERFACE_SYSTEM_PROMPT);
         setPrompt('');
     };
     

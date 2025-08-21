@@ -23,8 +23,7 @@ export const LandingPage: React.FC = () => {
     const { setActiveView } = useContext(AppContext);
 
     const handleEnter = () => {
-        // Explicitly prime the speech engine on this first user interaction.
-        primeSpeechEngine(); 
+        primeSpeechEngine(); // Explicitly prime the speech engine on the first user interaction.
         setActiveView(ActiveView.CHAT);
     };
 

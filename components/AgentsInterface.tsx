@@ -6,6 +6,7 @@ import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { atomDark } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import { LoadingIndicator } from './LoadingIndicator';
+import { RESEARCH_AGENT_SYSTEM_PROMPT, CODEX_AGENT_SYSTEM_PROMPT } from '../constants';
 
 const AgentRunner: React.FC<{
   title: string;
@@ -96,9 +97,6 @@ const AgentRunner: React.FC<{
 export const AgentsInterface: React.FC = () => {
   const [activeAgent, setActiveAgent] = useState<'research' | 'codex'>('research');
 
-  const RESEARCH_PROMPT = `You are a Deep Research Agent. Your goal is to provide a comprehensive and factual report on a given topic. Use the provided search tool to gather information from multiple reliable sources. Synthesize the information, identify key points, conflicting reports, and data trends. Present your findings in a structured markdown format. ALWAYS cite your sources by listing their URLs at the end of the report.`;
-  const CODEX_PROMPT = `You are a Codex Agent, an expert programmer and software architect with decades of experience in multiple languages. Your purpose is to write, analyze, debug, and optimize code. Provide clear, concise explanations for your work. When writing code, adhere to best practices, ensure it is well-commented, and choose the most efficient algorithms for the task. When debugging, explain the root cause of the error and the rationale behind the fix. Format all code in markdown code blocks with the correct language identifier.`;
-
   return (
     <ViewContainer title="Agents Interface">
       <div className="mb-6 flex justify-center border-b border-slate-700">
@@ -122,7 +120,7 @@ export const AgentsInterface: React.FC = () => {
             title="Deep Research Agent"
             description="Initiates a web-grounded search to gather, synthesize, and report on any topic with cited sources."
             placeholder="Enter a research topic, e.g., 'The impact of quantum computing on cryptography'"
-            systemPrompt={RESEARCH_PROMPT}
+            systemPrompt={RESEARCH_AGENT_SYSTEM_PROMPT}
             enableSearch={true}
           />
         )}
@@ -131,7 +129,7 @@ export const AgentsInterface: React.FC = () => {
             title="Codex Agent"
             description="An expert programming agent for code generation, analysis, and debugging."
             placeholder="Enter a coding request, e.g., 'Write a Python script to parse a CSV file and find the average of a specific column.'"
-            systemPrompt={CODEX_PROMPT}
+            systemPrompt={CODEX_AGENT_SYSTEM_PROMPT}
           />
         )}
       </div>
