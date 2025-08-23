@@ -104,6 +104,13 @@ export function speak(
         }
         
         const utteranceText = text.replace(/[*#_`]/g, '');
+        
+        // If the text becomes empty after removing markdown, there's nothing to say.
+        if (!utteranceText.trim()) {
+            onEnd?.();
+            return;
+        }
+
         const utterance = new SpeechSynthesisUtterance(utteranceText);
 
         if (onStart) utterance.onstart = onStart;
