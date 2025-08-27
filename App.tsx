@@ -3,10 +3,8 @@ import { Header } from './components/Header';
 import { ChatWindow } from './components/ChatWindow';
 import { PromptInput } from './components/PromptInput';
 import { SettingsModal } from './components/SettingsModal';
-import { getStreamingChatResponse, generateImage, generateVideo, enhancePrompt } from './services/geminiService';
 import { speak, playSound, primeSpeechEngine } from './services/speechService';
 import { Message, MessageRole, VoiceOption, History, UploadedFileInfo, ActiveView } from './types';
-import { NEXUS_SYSTEM_PROMPT } from './constants';
 import { AppContext } from './contexts/AppContext';
 import { SystemDiagnostics } from './components/SystemDiagnostics';
 import { EvolutionInterface } from './components/EvolutionInterface';
@@ -22,6 +20,8 @@ import { TravelAgentInterface } from './components/TravelAgentInterface';
 import { LandingPage } from './components/LandingPage';
 import { CameraCaptureModal } from './components/CameraCaptureModal';
 import { CanvasModal } from './components/CanvasModal';
+import { enhancePrompt, generateImage, generateVideo, getStreamingChatResponse } from './services/geminiService';
+import { NEXUS_SYSTEM_PROMPT } from './constants';
 import { WorkspaceContext } from './contexts/WorkspaceContext';
 import { workspaceTools } from './services/workspaceTools';
 
@@ -32,16 +32,10 @@ const App: React.FC = () => {
     messages,
     addMessage,
     updateLastMessage,
-    setMessages,
     isLoading,
     setIsLoading,
     error,
     setError,
-    isSearchEnabled,
-    stopGeneration,
-    stopGenerationRef,
-    uploadedFiles,
-    clearUploadedFiles,
     activeView,
     isSettingsModalOpen,
     setSettingsModalOpen,
@@ -50,8 +44,12 @@ const App: React.FC = () => {
     isCanvasModalOpen,
     setCanvasModalOpen,
     setAvatarState,
+    isSearchEnabled,
+    addRecentSearch,
+    stopGenerationRef,
+    uploadedFiles,
+    clearUploadedFiles,
   } = useContext(AppContext);
-
   const { addTask, moveTask, listTasks } = useContext(WorkspaceContext);
 
   const [isListening, setIsListening] = useState<boolean>(false);
@@ -107,6 +105,10 @@ const App: React.FC = () => {
   const handleSendMessage = useCallback(async (prompt: string, systemPromptOverride?: string) => {
     primeSpeechEngine(); // Ensure speech engine is ready
     if ((!prompt && uploadedFiles.length === 0) || isLoading) return;
+
+    if (isSearchEnabled && prompt) {
+        addRecentSearch(prompt);
+    }
 
     setIsLoading(true);
     setError(null);
@@ -332,7 +334,8 @@ const App: React.FC = () => {
       stopGenerationRef.current = false;
       clearUploadedFiles();
     }
-  }, [isLoading, messages, addMessage, updateLastMessage, setIsLoading, setError, stopGenerationRef, isSearchEnabled, settings, uploadedFiles, clearUploadedFiles, setAvatarState, addTask, moveTask, listTasks]);
+  }, [isLoading, messages, addMessage, updateLastMessage, setIsLoading, setError, stopGenerationRef, isSearchEnabled, settings, uploadedFiles, clearUploadedFiles, setAvatarState, addTask, moveTask, listTasks, addRecentSearch]);
+
 
   const renderContent = () => {
     // Full-screen interfaces
@@ -377,7 +380,7 @@ const App: React.FC = () => {
 
   return (
     <div className="flex flex-col h-screen bg-white dark:bg-slate-900 font-sans text-glow-blue transition-colors duration-300">
-      <Header />
+      <Header onSendMessage={handleSendMessage} />
       {renderContent()}
       <SettingsModal 
         isOpen={isSettingsModalOpen}

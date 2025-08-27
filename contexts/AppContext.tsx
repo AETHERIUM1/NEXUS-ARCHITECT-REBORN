@@ -1,5 +1,5 @@
 import React, { createContext, useState, useCallback, useRef, useEffect } from 'react';
-import { Message, Settings, Conversation, PromptEnhancerMode, ActiveView, AvatarState, MessageRole } from '../types';
+import { Message, Settings, Conversation, ActiveView, AvatarState, MessageRole } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { INITIAL_MESSAGE } from '../constants';
 
@@ -19,6 +19,7 @@ interface AppContextType {
   uploadedFiles: File[];
   activeView: ActiveView;
   avatarState: AvatarState;
+  recentSearches: string[];
 
   // Actions
   addMessage: (message: Message) => void;
@@ -49,6 +50,8 @@ interface AppContextType {
   setAvatarState: (state: AvatarState) => void;
   setCameraModalOpen: (isOpen: boolean) => void;
   setCanvasModalOpen: (isOpen: boolean) => void;
+
+  addRecentSearch: (query: string) => void;
 }
 
 const defaultAppContext: AppContextType = {
@@ -73,6 +76,7 @@ const defaultAppContext: AppContextType = {
   uploadedFiles: [],
   activeView: ActiveView.LANDING,
   avatarState: 'idle',
+  recentSearches: [],
   addMessage: () => {},
   updateLastMessage: () => {},
   deleteMessage: () => {},
@@ -96,6 +100,7 @@ const defaultAppContext: AppContextType = {
   setAvatarState: () => {},
   setCameraModalOpen: () => {},
   setCanvasModalOpen: () => {},
+  addRecentSearch: () => {},
 };
 
 export const AppContext = createContext<AppContextType>(defaultAppContext);
@@ -124,6 +129,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const [activeView, setActiveView] = useLocalStorage<ActiveView>('nexus-active-view', ActiveView.LANDING);
   const [avatarState, setAvatarState] = useState<AvatarState>('idle');
+  const [recentSearches, setRecentSearches] = useLocalStorage<string[]>('nexus-recent-searches', []);
 
   const addMessage = useCallback((message: Message) => {
     setMessages(prev => [...prev, message]);
@@ -156,7 +162,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [setSettings]);
 
   const clearUploadedFiles = useCallback(() => setUploadedFiles([]), []);
-
+  
+  const addRecentSearch = useCallback((query: string) => {
+    if (!query.trim()) return;
+    setRecentSearches(prev => {
+        const lowerCaseQuery = query.trim().toLowerCase();
+        const filtered = prev.filter(s => s.toLowerCase() !== lowerCaseQuery);
+        const newSearches = [query.trim(), ...filtered];
+        return newSearches.slice(0, 15); // Keep last 15 searches
+    });
+  }, [setRecentSearches]);
+  
   const saveCurrentConversation = useCallback(() => {
     if (!currentConversationId) return;
 
@@ -264,6 +280,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     uploadedFiles,
     activeView,
     avatarState,
+    recentSearches,
     addMessage,
     updateLastMessage,
     deleteMessage,
@@ -287,6 +304,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setAvatarState,
     setCameraModalOpen,
     setCanvasModalOpen,
+    addRecentSearch,
   };
 
   return (

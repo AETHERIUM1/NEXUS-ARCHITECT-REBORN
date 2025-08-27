@@ -5,6 +5,7 @@ import { FeaturesDropdown } from './FeaturesDropdown';
 import { AppContext } from '../contexts/AppContext';
 import { InterfaceSwitcher } from './InterfaceSwitcher';
 import { Avatar } from './Avatar';
+import { RecentSearches } from './RecentSearches';
 
 const padZero = (num: number) => num.toString().padStart(2, '0');
 
@@ -19,7 +20,11 @@ const formatDateTime = (date: Date) => {
   return `${year}-${month}-${day} | ${hours}:${minutes}:${seconds}`;
 };
 
-export const Header: React.FC = () => {
+interface HeaderProps {
+  onSendMessage: (prompt: string, systemPromptOverride?: string) => Promise<void>;
+}
+
+export const Header: React.FC<HeaderProps> = ({ onSendMessage }) => {
   const [currentDateTime, setCurrentDateTime] = useState(formatDateTime(new Date()));
   const { isLoading, openSettingsModal, avatarState } = useContext(AppContext);
 
@@ -57,6 +62,7 @@ export const Header: React.FC = () => {
       <div className="w-1/3 flex items-center justify-end gap-4">
         <FeaturesDropdown />
         <ConversationManager />
+        <RecentSearches onSendMessage={onSendMessage} />
         <SettingsButton onClick={openSettingsModal} disabled={isLoading} />
       </div>
     </header>
