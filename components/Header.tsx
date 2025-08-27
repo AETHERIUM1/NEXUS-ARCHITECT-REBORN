@@ -48,7 +48,7 @@ export const Header: React.FC = () => {
             <Avatar state={avatarState} size={24} />
           </div>
           <p className="text-xs font-mono uppercase tracking-widest text-cyan-500 dark:text-glow-cyan">
-            Architect Edition
+            INFINITY MODE
           </p>
         </div>
       </div>

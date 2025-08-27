@@ -149,19 +149,36 @@ const App: React.FC = () => {
 
     try {
       const lowerCasePrompt = executedPrompt.toLowerCase();
-      const imagePromptKeywords = ['generate image of', 'create an image of', 'draw a picture of', 'generate an image', 'create an image'];
+      const imagePromptKeywords = ['generate image of', 'create an image of', 'draw a picture of', 'generate an image', 'create an image', 'generate a meme of'];
       const videoPromptKeywords = ['generate video of', 'create a video of', 'make a video of', 'generate a video', 'create a video'];
 
       const imageKeyword = imagePromptKeywords.find(k => lowerCasePrompt.includes(k));
       const videoKeyword = videoPromptKeywords.find(k => lowerCasePrompt.includes(k));
-
-      const hasFileUploads = uploadedFiles.length > 0;
       
       const extractDescription = (fullPrompt: string, keyword: string) => {
           return fullPrompt.substring(fullPrompt.toLowerCase().indexOf(keyword) + keyword.length).trim();
       }
 
-      if (imageKeyword && !hasFileUploads) {
+      // --- MULTIMODAL GENERATION LOGIC ---
+      // Precedence: Video > Image > Text
+      if (videoKeyword) {
+        const videoDescription = extractDescription(executedPrompt, videoKeyword);
+        const imageFileForVideo = uploadedFiles.find(f => f.type.startsWith('image/'));
+
+        const onProgress = (progressText: string) => {
+            updateLastMessage({ text: progressText });
+        };
+        
+        const videoUrl = await generateVideo(videoDescription, onProgress, imageFileForVideo);
+
+        const modelMessageText = imageFileForVideo
+            ? `Generated video from uploaded image: ${videoDescription}`
+            : `Generated video: ${videoDescription}`;
+
+        updateLastMessage({ text: modelMessageText, videoUrl });
+        speak(modelMessageText, settings.voiceURI, settings.speechRate, settings.speechPitch, () => setAvatarState('speaking'), () => setAvatarState('idle'));
+
+      } else if (imageKeyword && uploadedFiles.length === 0) {
         const imageDescription = extractDescription(executedPrompt, imageKeyword);
         updateLastMessage({ text: 'Image generation protocol initiated...' });
         const imageUrl = await generateImage(imageDescription);
@@ -169,19 +186,7 @@ const App: React.FC = () => {
         updateLastMessage({ text: modelMessageText, imageUrl });
         speak(modelMessageText, settings.voiceURI, settings.speechRate, settings.speechPitch, () => setAvatarState('speaking'), () => setAvatarState('idle'));
 
-      } else if (videoKeyword && !hasFileUploads) {
-        const videoDescription = extractDescription(executedPrompt, videoKeyword);
-        
-        const onProgress = (progressText: string) => {
-            updateLastMessage({ text: progressText });
-        };
-        
-        const videoUrl = await generateVideo(videoDescription, onProgress);
-        const modelMessageText = `Generated video: ${videoDescription}`;
-        updateLastMessage({ text: modelMessageText, videoUrl });
-        speak(modelMessageText, settings.voiceURI, settings.speechRate, settings.speechPitch, () => setAvatarState('speaking'), () => setAvatarState('idle'));
-
-      } else {
+      } else { // Default to text/chat/tool response
         const history: History[] = messages
           .slice(0, -2) // Exclude user's new prompt and the empty model message
           .map(msg => ({
@@ -312,7 +317,7 @@ const App: React.FC = () => {
         } else if (lowerCaseError.includes('api key')) {
           displayError = '**System Error: Invalid API Key**\n\nPlease check your system configuration. The active API key is either missing, invalid, or has been revoked.';
         } else if (lowerCaseError.includes('quota') || lowerCaseError.includes('429') || lowerCaseError.includes('resource_exhausted')) {
-          displayError = '**System Error: API Quota or Rate Limit Exceeded**\n\nYour request could not be processed due to API limits. Please check your plan and billing details with Google AI.\n\nFor more information, you can visit the [Google AI Rate Limits documentation](https://ai.google.dev/gemini-api/docs/rate-limits).\n\n*NEXUS is aware of this limit and will evolve to handle it more gracefully.*';
+          displayError = '**System Error: API Quota or Rate Limit Exceeded**\n\nYour request could not be processed due to API limits. Please check your plan and billing details with the Nexus Cloud AI Platform.\n\n*NEXUS is aware of this limit and will evolve to handle it more gracefully.*';
         } else {
            displayError = `System Error: ${errorMessage}`;
         }

@@ -1,7 +1,7 @@
 import React, { useContext, useState } from 'react';
 import { AppContext } from '../contexts/AppContext';
 import { ViewContainer } from './ViewContainer';
-import { GEMINI_TEXT_MODEL, GEMINI_IMAGE_MODEL, GEMINI_VIDEO_MODEL } from '../constants';
+import { NEXUS_TEXT_MODEL, NEXUS_IMAGE_MODEL, NEXUS_VIDEO_MODEL } from '../constants';
 import { getAiInstance } from '../services/geminiService';
 
 const StatusPill: React.FC<{
@@ -36,7 +36,7 @@ export const SystemDiagnostics: React.FC = () => {
     const startTime = performance.now();
     try {
       const ai = getAiInstance();
-      await ai.models.generateContent({ model: GEMINI_TEXT_MODEL, contents: 'ping' });
+      await ai.models.generateContent({ model: NEXUS_TEXT_MODEL, contents: 'ping' });
       const endTime = performance.now();
       setLatency(Math.round(endTime - startTime));
     } catch (e) {
@@ -70,9 +70,9 @@ export const SystemDiagnostics: React.FC = () => {
         {/* Models & API */}
         <div className="space-y-4 p-4 bg-slate-900/50 rounded-lg">
           <h3 className="font-bold text-lg text-white border-b border-slate-700 pb-2">Models & API</h3>
-          <StatusPill label="Text Model" value={GEMINI_TEXT_MODEL} />
-          <StatusPill label="Image Model" value={GEMINI_IMAGE_MODEL} />
-          <StatusPill label="Video Model" value={GEMINI_VIDEO_MODEL} />
+          <StatusPill label="Text Model" value={NEXUS_TEXT_MODEL} />
+          <StatusPill label="Image Model" value={NEXUS_IMAGE_MODEL} />
+          <StatusPill label="Video Model" value={NEXUS_VIDEO_MODEL} />
         </div>
 
         {/* Data & Memory */}

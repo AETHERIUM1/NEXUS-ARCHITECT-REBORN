@@ -1,5 +1,5 @@
 import React, { createContext, useState, useCallback, useRef, useEffect } from 'react';
-import { Message, Settings, Conversation, PromptEnhancerMode, ActiveView, AvatarState } from '../types';
+import { Message, Settings, Conversation, PromptEnhancerMode, ActiveView, AvatarState, MessageRole } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { INITIAL_MESSAGE } from '../constants';
 
@@ -31,193 +31,223 @@ interface AppContextType {
   createNewConversation: () => void;
   deleteConversation: (id: string) => void;
   renameConversation: (id: string, newTitle: string) => void;
-  importConversation: (conversationData: Partial<Conversation>) => void;
-  
+  importConversation: (conversationData: { title: string; messages: Message[] }) => void;
+
   updateSettings: (newSettings: Partial<Settings>) => void;
-  setIsLoading: (loading: boolean) => void;
+  setIsLoading: (isLoading: boolean) => void;
   setError: (error: string | null) => void;
-  setIsSearchEnabled: (enabled: boolean) => void;
+  setIsSearchEnabled: (isSearchEnabled: boolean) => void;
   setSettingsModalOpen: (isOpen: boolean) => void;
+  openSettingsModal: () => void;
+  
+  stopGeneration: () => void;
+
+  setUploadedFiles: (files: File[] | ((prevFiles: File[]) => File[])) => void;
+  clearUploadedFiles: () => void;
+  
+  setActiveView: (view: ActiveView) => void;
+  setAvatarState: (state: AvatarState) => void;
   setCameraModalOpen: (isOpen: boolean) => void;
   setCanvasModalOpen: (isOpen: boolean) => void;
-  stopGeneration: () => void;
-  openSettingsModal: () => void;
-  setUploadedFiles: React.Dispatch<React.SetStateAction<File[]>>;
-  clearUploadedFiles: () => void;
-  setActiveView: (view: ActiveView) => void;
-  setAvatarState: React.Dispatch<React.SetStateAction<AvatarState>>;
 }
 
-export const AppContext = createContext<AppContextType>(null!);
+const defaultAppContext: AppContextType = {
+  messages: [],
+  conversations: [],
+  currentConversationId: null,
+  settings: {
+    theme: 'dark',
+    voiceURI: null,
+    notificationSoundURI: 'https://cdn.pixabay.com/audio/2022/03/15/audio_547ce6a6a5.mp3',
+    speechRate: 1,
+    speechPitch: 1.1,
+    promptEnhancerMode: 'standard',
+  },
+  isLoading: false,
+  error: null,
+  isSearchEnabled: false,
+  isSettingsModalOpen: false,
+  isCameraModalOpen: false,
+  isCanvasModalOpen: false,
+  stopGenerationRef: { current: false },
+  uploadedFiles: [],
+  activeView: ActiveView.LANDING,
+  avatarState: 'idle',
+  addMessage: () => {},
+  updateLastMessage: () => {},
+  deleteMessage: () => {},
+  setMessages: () => {},
+  loadConversation: () => {},
+  saveCurrentConversation: () => {},
+  createNewConversation: () => {},
+  deleteConversation: () => {},
+  renameConversation: () => {},
+  importConversation: () => {},
+  updateSettings: () => {},
+  setIsLoading: () => {},
+  setError: () => {},
+  setIsSearchEnabled: () => {},
+  setSettingsModalOpen: () => {},
+  openSettingsModal: () => {},
+  stopGeneration: () => {},
+  setUploadedFiles: () => {},
+  clearUploadedFiles: () => {},
+  setActiveView: () => {},
+  setAvatarState: () => {},
+  setCameraModalOpen: () => {},
+  setCanvasModalOpen: () => {},
+};
+
+export const AppContext = createContext<AppContextType>(defaultAppContext);
 
 const DEFAULT_SETTINGS: Settings = {
   theme: 'dark',
   voiceURI: null,
-  notificationSoundURI: null,
+  notificationSoundURI: 'https://cdn.pixabay.com/audio/2022/03/15/audio_547ce6a6a5.mp3',
   speechRate: 1,
   speechPitch: 1.1,
-  promptEnhancerMode: 'off',
+  promptEnhancerMode: 'standard',
 };
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [settings, setSettings] = useLocalStorage<Settings>('nexus-settings', DEFAULT_SETTINGS);
+  const [messages, setMessages] = useState<Message[]>([INITIAL_MESSAGE]);
   const [conversations, setConversations] = useLocalStorage<Conversation[]>('nexus-conversations', []);
   const [currentConversationId, setCurrentConversationId] = useLocalStorage<string | null>('nexus-current-conversation-id', null);
-  
-  const [messages, setMessagesState] = useState<Message[]>([INITIAL_MESSAGE]);
-  const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [settings, setSettings] = useLocalStorage<Settings>('nexus-settings', DEFAULT_SETTINGS);
+  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isSearchEnabled, setIsSearchEnabled] = useState<boolean>(false);
+  const [isSearchEnabled, setIsSearchEnabled] = useState(false);
   const [isSettingsModalOpen, setSettingsModalOpen] = useState(false);
   const [isCameraModalOpen, setCameraModalOpen] = useState(false);
   const [isCanvasModalOpen, setCanvasModalOpen] = useState(false);
+  const stopGenerationRef = useRef(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const [activeView, setActiveView] = useState<ActiveView>(ActiveView.LANDING);
+  const [activeView, setActiveView] = useLocalStorage<ActiveView>('nexus-active-view', ActiveView.LANDING);
   const [avatarState, setAvatarState] = useState<AvatarState>('idle');
-  
-  const stopGenerationRef = useRef<boolean>(false);
 
-  // Load current conversation from storage on startup
-  useEffect(() => {
-    // We only load conversation data if we are NOT on the landing page initially.
-    // The user will load a conversation by clicking on it.
-    if (activeView !== ActiveView.LANDING) {
-      const activeConversation = conversations.find(c => c.id === currentConversationId);
-      if (activeConversation) {
-        setMessagesState(activeConversation.messages);
-      } else if (conversations.length > 0) {
-        const mostRecent = conversations.sort((a, b) => b.lastModified - a.lastModified)[0];
-        setCurrentConversationId(mostRecent.id);
-        setMessagesState(mostRecent.messages);
-      } else {
-        createNewConversation();
-      }
-    }
-  }, []); // Run once on mount
+  const addMessage = useCallback((message: Message) => {
+    setMessages(prev => [...prev, message]);
+  }, []);
 
-  const saveCurrentConversation = useCallback(() => {
-    if (!currentConversationId) return;
-
-    const now = Date.now();
-    const updatedConversations = conversations.map(c =>
-      c.id === currentConversationId
-        ? { ...c, messages: messages, lastModified: now }
-        : c
-    );
-    setConversations(updatedConversations);
-  }, [messages, currentConversationId, conversations, setConversations]);
-
-  // Auto-save whenever messages change
-  useEffect(() => {
-    if (currentConversationId && activeView === ActiveView.CHAT) {
-      saveCurrentConversation();
-    }
-  }, [messages, currentConversationId, saveCurrentConversation, activeView]);
-  
-  const setMessages = (newMessages: Message[]) => {
-    setMessagesState(newMessages);
-  };
-
-  const addMessage = (message: Message) => {
-    setMessagesState(prev => [...prev, message]);
-  };
-
-  const updateLastMessage = (updates: Partial<Message>) => {
-    setMessagesState(prev => {
+  const updateLastMessage = useCallback((updates: Partial<Message>) => {
+    setMessages(prev => {
       const newMessages = [...prev];
       if (newMessages.length > 0) {
         newMessages[newMessages.length - 1] = { ...newMessages[newMessages.length - 1], ...updates };
       }
       return newMessages;
     });
-  };
+  }, []);
+  
+  const deleteMessage = useCallback((index: number) => {
+    setMessages(prev => prev.filter((_, i) => i !== index));
+  }, []);
 
-  const deleteMessage = (indexToDelete: number) => {
-    if (isLoading || indexToDelete === 0) return;
-    setMessagesState(prev => prev.filter((_, index) => index !== indexToDelete));
-  };
+  const stopGeneration = useCallback(() => {
+    stopGenerationRef.current = true;
+    setIsLoading(false);
+    console.log("Stop generation requested.");
+  }, []);
 
-  const loadConversation = (id: string) => {
+  const openSettingsModal = useCallback(() => setSettingsModalOpen(true), []);
+
+  const updateSettings = useCallback((newSettings: Partial<Settings>) => {
+    setSettings(prev => ({ ...prev, ...newSettings }));
+  }, [setSettings]);
+
+  const clearUploadedFiles = useCallback(() => setUploadedFiles([]), []);
+
+  const saveCurrentConversation = useCallback(() => {
+    if (!currentConversationId) return;
+
+    if (messages.length <= 1 && messages[0]?.role === MessageRole.MODEL) {
+      return;
+    }
+
+    setConversations(prev => {
+      const existingConv = prev.find(c => c.id === currentConversationId);
+      const updatedConv: Conversation = {
+        id: currentConversationId,
+        title: existingConv?.title || messages.find(m => m.role === MessageRole.USER)?.text.substring(0, 40) || 'Untitled Session',
+        messages: messages,
+        createdAt: existingConv?.createdAt || Date.now(),
+        lastModified: Date.now(),
+      };
+      const otherConvs = prev.filter(c => c.id !== currentConversationId);
+      return [...otherConvs, updatedConv];
+    });
+  }, [currentConversationId, messages, setConversations]);
+  
+  useEffect(() => {
+    const handler = setTimeout(() => {
+        saveCurrentConversation();
+    }, 1000);
+
+    return () => {
+        clearTimeout(handler);
+    };
+  }, [messages, saveCurrentConversation]);
+
+  const loadConversation = useCallback((id: string) => {
     const conversation = conversations.find(c => c.id === id);
     if (conversation) {
+      setMessages(conversation.messages);
       setCurrentConversationId(id);
-      setMessagesState(conversation.messages);
-      setActiveView(ActiveView.CHAT); // Switch to chat view when loading a conversation
-      setIsLoading(false);
-      setError(null);
+      setActiveView(ActiveView.CHAT);
     }
-  };
+  }, [conversations, setCurrentConversationId, setActiveView]);
 
-  const createNewConversation = () => {
-    const now = Date.now();
-    const newConversation: Conversation = {
-      id: `conv-${now}`,
-      title: `New Session - ${new Date(now).toLocaleTimeString()}`,
-      messages: [INITIAL_MESSAGE],
-      createdAt: now,
-      lastModified: now,
-    };
-    setConversations(prev => [...prev, newConversation]);
-    setCurrentConversationId(newConversation.id);
-    setMessagesState(newConversation.messages);
+  const createNewConversation = useCallback(() => {
+    saveCurrentConversation();
+    const newId = `conv-${Date.now()}`;
+    setMessages([INITIAL_MESSAGE]);
+    setCurrentConversationId(newId);
     setActiveView(ActiveView.CHAT);
-  };
-
-  const deleteConversation = (id: string) => {
-    setConversations(prev => prev.filter(c => c.id !== id));
-    if (currentConversationId === id) {
-      const remainingConversations = conversations.filter(c => c.id !== id);
-      if (remainingConversations.length > 0) {
-        loadConversation(remainingConversations.sort((a,b) => b.lastModified - a.lastModified)[0].id);
+  }, [saveCurrentConversation, setCurrentConversationId, setActiveView]);
+  
+  useEffect(() => {
+    if (!currentConversationId) {
+      createNewConversation();
+    } else {
+      const conversation = conversations.find(c => c.id === currentConversationId);
+      if (conversation) {
+        setMessages(conversation.messages);
       } else {
         createNewConversation();
       }
     }
-  };
-
-  const renameConversation = (id: string, newTitle: string) => {
-    setConversations(prev => prev.map(c => c.id === id ? { ...c, title: newTitle, lastModified: Date.now() } : c));
-  };
-  
-  const importConversation = (conversationData: Partial<Conversation>) => {
-    if (!conversationData.messages || !conversationData.title) {
-      console.error("Invalid conversation file: missing title or messages.");
-      alert("Invalid conversation file: missing title or messages.");
-      return;
-    }
-
-    const now = Date.now();
-    const newConversation: Conversation = {
-      id: `conv-${now}`,
-      title: conversationData.title || `Imported - ${new Date(now).toLocaleTimeString()}`,
-      messages: conversationData.messages,
-      createdAt: now,
-      lastModified: now,
-    };
-    
-    // Use a functional update to ensure we have the latest conversations array
-    setConversations(prev => [...prev, newConversation]);
-    // Load the newly created conversation
-    setCurrentConversationId(newConversation.id);
-    setMessagesState(newConversation.messages);
-    setActiveView(ActiveView.CHAT);
-    setIsLoading(false);
-    setError(null);
-  };
-
-  const updateSettings = (newSettings: Partial<Settings>) => {
-    setSettings(prev => ({ ...prev, ...newSettings }));
-  };
-
-  const stopGeneration = () => {
-    stopGenerationRef.current = true;
-  };
-  
-  const openSettingsModal = () => setSettingsModalOpen(true);
-  
-  const clearUploadedFiles = useCallback(() => {
-    setUploadedFiles([]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const deleteConversation = useCallback((id: string) => {
+    setConversations(prev => prev.filter(c => c.id !== id));
+    if (currentConversationId === id) {
+      const remainingConversations = conversations.filter(c => c.id !== id);
+      if (remainingConversations.length > 0) {
+          const mostRecent = [...remainingConversations].sort((a,b) => b.lastModified - a.lastModified)[0];
+          loadConversation(mostRecent.id);
+      } else {
+          createNewConversation();
+      }
+    }
+  }, [conversations, currentConversationId, setConversations, createNewConversation, loadConversation]);
+
+  const renameConversation = useCallback((id: string, newTitle: string) => {
+    setConversations(prev => prev.map(c => c.id === id ? { ...c, title: newTitle, lastModified: Date.now() } : c));
+  }, [setConversations]);
+  
+  const importConversation = useCallback((conversationData: { title: string; messages: Message[] }) => {
+    const newId = `conv-${Date.now()}`;
+    const newConversation: Conversation = {
+        id: newId,
+        title: conversationData.title,
+        messages: conversationData.messages,
+        createdAt: Date.now(),
+        lastModified: Date.now(),
+    };
+    setConversations(prev => [...prev, newConversation]);
+    loadConversation(newId);
+  }, [setConversations, loadConversation]);
 
   const value = {
     messages,
@@ -249,15 +279,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setError,
     setIsSearchEnabled,
     setSettingsModalOpen,
-    setCameraModalOpen,
-    setCanvasModalOpen,
-    stopGeneration,
     openSettingsModal,
+    stopGeneration,
     setUploadedFiles,
     clearUploadedFiles,
     setActiveView,
     setAvatarState,
+    setCameraModalOpen,
+    setCanvasModalOpen,
   };
 
-  return <AppContext.Provider value={value}>{children}</AppContext.Provider>;
+  return (
+    <AppContext.Provider value={value}>
+      {children}
+    </AppContext.Provider>
+  );
 };

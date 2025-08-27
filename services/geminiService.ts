@@ -1,5 +1,5 @@
 import { GoogleGenAI, GenerateVideosOperation, FunctionDeclaration } from "@google/genai";
-import { GEMINI_TEXT_MODEL, GEMINI_IMAGE_MODEL, GEMINI_VIDEO_MODEL, PROMPT_ENHANCER_SYSTEM_PROMPT } from '../constants';
+import { NEXUS_TEXT_MODEL, NEXUS_IMAGE_MODEL, NEXUS_VIDEO_MODEL, PROMPT_ENHANCER_SYSTEM_PROMPT } from '../constants';
 import { History, GroundingSource, PromptEnhancerMode } from "../types";
 
 if (!process.env.API_KEY) {
@@ -47,7 +47,7 @@ export async function enhancePrompt(prompt: string, mode: PromptEnhancerMode): P
     const systemInstruction = PROMPT_ENHANCER_SYSTEM_PROMPT(mode);
 
     const response = await aiInstance.models.generateContent({
-      model: GEMINI_TEXT_MODEL,
+      model: NEXUS_TEXT_MODEL,
       contents: [{ role: 'user', parts: [{ text: prompt }] }],
       config: {
         systemInstruction,
@@ -141,7 +141,7 @@ export async function* getStreamingChatResponse(
     }
 
     const response = await aiInstance.models.generateContentStream({
-        model: GEMINI_TEXT_MODEL,
+        model: NEXUS_TEXT_MODEL,
         contents: contents,
         config: config,
     });
@@ -167,7 +167,7 @@ export async function* getStreamingChatResponse(
     if (error instanceof Error) {
         throw error;
     }
-    throw new Error("Failed to get streaming response from Gemini API.");
+    throw new Error("Failed to get streaming response from the Nexus API.");
   }
 }
 
@@ -175,7 +175,7 @@ export async function generateImage(prompt: string): Promise<string> {
   try {
     const aiInstance = getAiInstance();
     const response = await aiInstance.models.generateImages({
-      model: GEMINI_IMAGE_MODEL,
+      model: NEXUS_IMAGE_MODEL,
       prompt: `A high-resolution, cinematic, professional photograph of: ${prompt}`,
       config: {
         numberOfImages: 1,
@@ -195,11 +195,11 @@ export async function generateImage(prompt: string): Promise<string> {
     if (error instanceof Error) {
       throw error;
     }
-    throw new Error("Failed to generate image with Gemini API.");
+    throw new Error("Failed to generate image with the Nexus API.");
   }
 }
 
-export async function generateVideo(prompt: string, onProgress: (message: string) => void): Promise<string> {
+export async function generateVideo(prompt: string, onProgress: (message: string) => void, imageFile?: File): Promise<string> {
   try {
     const aiInstance = getAiInstance();
     const apiKey = process.env.API_KEY;
@@ -207,10 +207,26 @@ export async function generateVideo(prompt: string, onProgress: (message: string
       throw new Error("System configuration error: API Key is missing for video download.");
     }
     
+    let imagePayload;
+    if (imageFile) {
+        onProgress("Processing input image for video generation...");
+        const base64EncodedData = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve((reader.result as string).split(',')[1]);
+            reader.onerror = (err) => reject(err);
+            reader.readAsDataURL(imageFile);
+        });
+        imagePayload = {
+            imageBytes: base64EncodedData,
+            mimeType: imageFile.type,
+        };
+    }
+    
     onProgress("Video genesis protocol initiated. Weaving reality...");
     let operation: GenerateVideosOperation = await aiInstance.models.generateVideos({
-      model: GEMINI_VIDEO_MODEL,
+      model: NEXUS_VIDEO_MODEL,
       prompt: `A cinematic, high-definition, professional video of: ${prompt}`,
+      ...(imagePayload && { image: imagePayload }),
       config: {
         numberOfVideos: 1,
       },
@@ -243,6 +259,6 @@ export async function generateVideo(prompt: string, onProgress: (message: string
     if (error instanceof Error) {
       throw error;
     }
-    throw new Error("Failed to generate video with Gemini API.");
+    throw new Error("Failed to generate video with the Nexus API.");
   }
 }

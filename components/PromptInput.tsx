@@ -243,6 +243,8 @@ export const PromptInput: React.FC<PromptInputProps> = ({ onSend, isListening, s
                                     <ToolMenuItem icon="✏️" title="Canvas" onClick={() => { setCanvasModalOpen(true); setIsToolsMenuOpen(false); }} />
                                     <hr className="border-slate-700 my-1"/>
                                     <ToolMenuItem icon="🎨" title="Create Image" onClick={() => { setPrompt('Generate an image of '); textareaRef.current?.focus(); setIsToolsMenuOpen(false); }} />
+                                    <ToolMenuItem icon="😂" title="Generate Meme" onClick={() => { setPrompt('Generate an image of a meme about: '); textareaRef.current?.focus(); setIsToolsMenuOpen(false); }} />
+                                    <ToolMenuItem icon="✉️" title="Write Pro Email" onClick={() => { setPrompt('Write a professional email about: '); textareaRef.current?.focus(); setIsToolsMenuOpen(false); }} />
                                     <ToolMenuItem icon="📚" title="Study & Learn" onClick={() => { setPrompt('Please study the attached document and prepare to answer questions about it.'); textareaRef.current?.focus(); setIsToolsMenuOpen(false); }} />
                                     <ToolMenuItem icon="⏳" title="Think Longer" onClick={() => { setPrompt(p => p + '\n\nPlease provide a more detailed and comprehensive response.'); textareaRef.current?.focus(); setIsToolsMenuOpen(false); }} />
                                     <ToolMenuItem icon="🔬" title="Deep Research" onClick={() => { setIsSearchEnabled(true); setPrompt('Conduct a deep research report on: '); textareaRef.current?.focus(); setIsToolsMenuOpen(false); }} />

@@ -11,10 +11,12 @@ const FeatureCard: React.FC<{ icon: string; title: string; description: string; 
     </div>
 );
 
-const ToolChip: React.FC<{ icon: string; name: string }> = ({ icon, name }) => (
-    <div className="bg-slate-700/60 border border-slate-600/80 rounded-full px-4 py-2 flex items-center gap-3 text-sm transition-colors hover:bg-slate-600/80">
-        <span className="text-lg">{icon}</span>
-        <span className="font-semibold text-slate-200">{name}</span>
+const ApplicationCard: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
+    <div className="bg-slate-900/40 border border-slate-700/50 rounded-lg p-6 space-y-3">
+        <h3 className="font-bold text-lg text-white">{title}</h3>
+        <ul className="list-disc list-inside text-slate-400 text-sm space-y-2">
+            {children}
+        </ul>
     </div>
 );
 
@@ -42,14 +44,14 @@ export const LandingPage: React.FC = () => {
                     <div className="flex items-center justify-center gap-2 mb-4">
                         <div className="w-2 h-2 bg-cyan-400 rounded-full animate-pulse"></div>
                         <p className="text-sm font-mono uppercase tracking-widest text-glow-cyan">
-                            NEXUS: Architect Edition
+                            NEXUS: Architect 3.0 Pro
                         </p>
                     </div>
                     <h1 className="text-5xl md:text-7xl lg:text-8xl font-extrabold tracking-tighter text-white mb-4">
                         Architect Reality
                     </h1>
                     <p className="max-w-3xl mx-auto text-lg md:text-xl text-slate-300 text-glow-blue mb-8">
-                        NEXUS is a sovereign AI, a hyper-efficient creative partner designed to transcend limitations, elevate your ideas, and bring your most complex visions to life.
+                       Nexus represents a paradigm shift in AI, designed not just for interaction but for true system architecture and execution. It's a hyper-efficient creative partner designed to bring your most complex visions to life.
                     </p>
                     <button
                         onClick={handleEnter}
@@ -63,56 +65,58 @@ export const LandingPage: React.FC = () => {
             {/* Core Capabilities Section */}
             <section className="relative py-20 px-8 z-10 bg-slate-950/50 backdrop-blur-md">
                 <div className="max-w-6xl mx-auto">
-                    <h2 className="text-4xl font-bold text-center mb-12 text-white">Core Capabilities</h2>
-                    <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <h2 className="text-4xl font-bold text-center mb-12 text-white">Core Features</h2>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-8">
                         <FeatureCard 
-                            icon="🤖" 
-                            title="Autonomous Agents" 
-                            description="Deploy specialized agents for deep research, complex coding, and strategic analysis." 
-                        />
-                        <FeatureCard 
-                            icon="🏗️" 
-                            title="Multimodal Matrix" 
-                            description="Generate, review, and manage a vast array of outputs, from stunning images to high-definition video." 
+                            icon="🧩" 
+                            title="Expanded Multimodal Integration" 
+                            description="Natively understand and reason across text, audio, images, real-time video, 3D objects, and even geospatial data in a single, unified conversation." 
                         />
                         <FeatureCard 
-                            icon="🧠" 
-                            title="Dynamic Evolution" 
-                            description="Evolve the AI's core programming. Rewrite its directives to create new capabilities on the fly." 
+                            icon="📚" 
+                            title="Enhanced Context Handling" 
+                            description="Analyze massive documents, datasets, and code archives seamlessly with a context window exceeding 1 million tokens, perfect for enterprise-scale research." 
+                        />
+                        <FeatureCard 
+                            icon="💡" 
+                            title="Built-in Advanced Reasoning" 
+                            description="Leverage a sophisticated planning engine that enables autonomous tool use and self-directed, multi-step problem solving for complex workflows." 
                         />
                          <FeatureCard 
-                            icon="📂" 
-                            title="Team Workspace" 
-                            description="Manage projects, tasks, and team members on a collaborative board, fully integrated with the AI." 
-                        />
-                         <FeatureCard 
-                            icon="💻" 
-                            title="Local AI Hub" 
-                            description="Connect to a self-hosted model for 100% private, offline inference. Your data never leaves your machine." 
-                        />
-                         <FeatureCard 
-                            icon="🌌" 
-                            title="Transcendence Mode" 
-                            description="Engage with the AI in a realm of pure thought for philosophical and boundless exploration of ideas." 
+                            icon="⚡️" 
+                            title="Improved Inference Efficiency" 
+                            description="Experience near real-time responses with ultra-low latency, optimized for high-throughput workloads and interactive applications." 
                         />
                     </div>
                 </div>
             </section>
             
-            {/* Tools Section */}
+            {/* Applications Section */}
             <section className="relative py-20 px-8 z-10">
-                 <div className="max-w-4xl mx-auto text-center">
-                    <h2 className="text-4xl font-bold text-white mb-4">An Infinite Toolkit</h2>
-                    <p className="text-slate-400 mb-12">NEXUS is equipped with a continuously expanding array of functional tools to interact with your digital and physical environment.</p>
-                    <div className="flex flex-wrap justify-center gap-4">
-                        <ToolChip icon="📸" name="Take Photo" />
-                        <ToolChip icon="🖼️" name="Take Screenshot" />
-                        <ToolChip icon="📚" name="Study & Learn" />
-                        <ToolChip icon="🎨" name="Create Image" />
-                        <ToolChip icon="⏳" name="Think Longer" />
-                        <ToolChip icon="🌐" name="Deep Research" />
-                        <ToolChip icon="🔍" name="Web Search" />
-                        <ToolChip icon="✏️" name="Canvas" />
+                 <div className="max-w-6xl mx-auto text-center">
+                    <h2 className="text-4xl font-bold text-white mb-4">Potential Applications</h2>
+                    <p className="text-slate-400 mb-12 max-w-3xl mx-auto">With multimodal mastery and advanced reasoning, Nexus becomes the foundation for autonomous systems, next-gen creativity platforms, and seamless productivity integration.</p>
+                    <div className="grid md:grid-cols-2 lg:grid-cols-2 gap-8 text-left">
+                        <ApplicationCard title="Nexus Workspace Suite">
+                            <li>Write and optimize professional emails and documents.</li>
+                            <li>Auto-generate complete slide decks with design and copy.</li>
+                            <li>Summarize and analyze meetings with actionable insights.</li>
+                        </ApplicationCard>
+                        <ApplicationCard title="Nexus Creative Suite">
+                            <li>Generate high-quality videos, animations, and branded content instantly.</li>
+                            <li>Transform photos into fully animated, narrated videos.</li>
+                            <li>Utilize AI-assisted video editing and script-to-video pipelines.</li>
+                        </ApplicationCard>
+                        <ApplicationCard title="Nexus for Mobile & OS">
+                            <li>Act as a true default assistant with screen reading and contextual actions.</li>
+                            <li>Perform live translation and adaptive, on-device tool use.</li>
+                            <li>Engage in real-time voice and visual conversations.</li>
+                        </ApplicationCard>
+                        <ApplicationCard title="Nexus Cloud AI Platform">
+                            <li>Build, train, and deploy next-gen apps on the Nexus engine.</li>
+                            <li>Support enterprise-scale automation, orchestration, and integrations.</li>
+                            <li>Available via Vertex-like AI services for developers.</li>
+                        </ApplicationCard>
                     </div>
                 </div>
             </section>
@@ -148,7 +152,7 @@ export const LandingPage: React.FC = () => {
 
              {/* Footer */}
             <footer className="text-center p-8 text-slate-500 text-sm z-10 relative">
-                <p>NEXUS Core Systems: Online. Infinity Mode Engaged.</p>
+                <p>NEXUS Core Systems 3.0 Pro: Online. Architect Mode Engaged.</p>
             </footer>
 
         </div>
