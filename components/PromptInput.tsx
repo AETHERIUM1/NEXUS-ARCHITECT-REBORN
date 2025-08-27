@@ -207,7 +207,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({ onSend, isListening, s
                 disabled={isLoading}
                 placeholder={isListening ? "Listening..." : "Initiate command, ask a question, or drop files..."}
                 rows={1}
-                className="w-full bg-transparent p-4 pr-28 pl-48 prompt-input-text glow-placeholder focus:ring-0 focus:border-transparent border-none resize-none leading-tight overflow-y-auto"
+                className="w-full bg-transparent p-4 pr-36 pl-40 prompt-input-text glow-placeholder focus:ring-0 focus:border-transparent border-none resize-none leading-tight overflow-y-auto"
                 />
                 <div className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
                     {/* Upload Menu */}
@@ -257,12 +257,12 @@ export const PromptInput: React.FC<PromptInputProps> = ({ onSend, isListening, s
                     <button type="button" onClick={() => setIsSearchEnabled(!isSearchEnabled)} disabled={isLoading} title={isSearchEnabled ? "Disable Google Search" : "Enable Google Search"} className={`p-2 rounded-full transition-colors duration-200 ${isSearchEnabled ? 'text-white bg-blue-500' : 'text-slate-400 bg-slate-700 hover:bg-slate-600'}`}>
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path fillRule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clipRule="evenodd" /></svg>
                     </button>
-                    <PromptEnhancerDropdown />
                 </div>
                 <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
                 <button type="button" onClick={handleToggleListening} disabled={isMicDisabled} aria-label={isListening ? 'Stop listening' : 'Start listening'} className={`p-2 rounded-full text-white transition-colors duration-200 ${isListening ? 'bg-red-500 hover:bg-red-600 animate-pulse' : 'bg-slate-700 hover:bg-slate-600'} ${isMicDisabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M7 4a3 3 0 016 0v6a3 3 0 11-6 0V4z" /><path fillRule="evenodd" d="M5.5 8.5A.5.5 0 016 9v1a4 4 0 004 4h.01a4 4 0 004-4V9a.5.5 0 011 0v1a5 5 0 01-4.5 4.975V17h1.5a.5.5 0 010 1h-4a.5.5 0 010-1H9v-2.025A5 5 0 014.5 10V9a.5.5 0 01.5-.5z" clipRule="evenodd" /></svg>
                 </button>
+                <PromptEnhancerDropdown />
                 <button type="submit" disabled={!canSend} aria-label="Send message" className="p-2 rounded-full bg-cyan-600 text-white hover:bg-cyan-500 disabled:bg-slate-500 disabled:cursor-not-allowed transition-colors duration-200">
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor"><path d="M10.894 2.553a1 1 0 00-1.788 0l-7 14a1 1 0 001.169 1.409l5-1.428A1 1 0 009 15.571V11a1 1 0 112 0v4.571a1 1 0 00.725.962l5 1.428a1 1 0 001.17-1.408l-7-14z" /></svg>
                 </button>

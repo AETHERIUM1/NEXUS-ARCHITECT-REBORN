@@ -320,6 +320,8 @@ const App: React.FC = () => {
           displayError = '**System Error: Invalid API Key**\n\nPlease check your system configuration. The active API key is either missing, invalid, or has been revoked.';
         } else if (lowerCaseError.includes('quota') || lowerCaseError.includes('429') || lowerCaseError.includes('resource_exhausted')) {
           displayError = '**System Error: API Quota or Rate Limit Exceeded**\n\nYour request could not be processed due to API limits. Please check your plan and billing details with the Nexus Cloud AI Platform.\n\n*NEXUS is aware of this limit and will evolve to handle it more gracefully.*';
+        } else if (isSearchEnabled) {
+          displayError = '**System Error: Web Search Failed**\n\nThe web search tool encountered an issue and could not complete the request. Please try again.';
         } else {
            displayError = `System Error: ${errorMessage}`;
         }

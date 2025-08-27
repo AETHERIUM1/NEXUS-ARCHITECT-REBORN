@@ -55,12 +55,22 @@ export function primeSpeechEngine() {
     return;
   }
   
+  const synth = window.speechSynthesis;
+
   // On many browsers, the act of getting voices is enough to "wake up" the engine.
   initializeVoices();
   
   // A single cancel() on the first prime can help clear any stale state from a 
   // previous page session or a browser bug, without queuing a new utterance.
-  window.speechSynthesis.cancel(); 
+  synth.cancel(); 
+
+  // Create a silent, empty utterance.
+  const silentUtterance = new SpeechSynthesisUtterance('');
+  silentUtterance.volume = 0; // Make it silent
+  
+  // Speaking this silent utterance inside a user gesture (like the "Enter NEXUS" button click)
+  // should "unlock" the speech synthesis for subsequent programmatic calls, fixing "not-allowed" errors.
+  synth.speak(silentUtterance);
   
   isEnginePrimed = true;
 }

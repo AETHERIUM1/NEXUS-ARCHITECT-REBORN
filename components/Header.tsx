@@ -6,6 +6,7 @@ import { AppContext } from '../contexts/AppContext';
 import { InterfaceSwitcher } from './InterfaceSwitcher';
 import { Avatar } from './Avatar';
 import { RecentSearches } from './RecentSearches';
+import { HeaderVoiceSearch } from './HeaderVoiceSearch';
 
 const padZero = (num: number) => num.toString().padStart(2, '0');
 
@@ -63,6 +64,7 @@ export const Header: React.FC<HeaderProps> = ({ onSendMessage }) => {
         <FeaturesDropdown />
         <ConversationManager />
         <RecentSearches onSendMessage={onSendMessage} />
+        <HeaderVoiceSearch onSend={onSendMessage} />
         <SettingsButton onClick={openSettingsModal} disabled={isLoading} />
       </div>
     </header>
