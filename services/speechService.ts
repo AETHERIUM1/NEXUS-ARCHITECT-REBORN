@@ -62,9 +62,16 @@ export function primeSpeechEngine() {
   
   // A single cancel() on the first prime can help clear any stale state from a 
   // previous page session or a browser bug, without queuing a new utterance.
-  synth.cancel(); 
+  synth.cancel();
 
-  // Create a silent, empty utterance.
+  // On some browsers, the speech context may start in a 'paused' state,
+  // and requires a resume() call within a user gesture to activate it.
+  if (synth.paused) {
+    synth.resume();
+  }
+
+  // To be absolutely sure the engine is unlocked, we'll try speaking a silent utterance.
+  // This is a common trick to satisfy autoplay policies.
   const silentUtterance = new SpeechSynthesisUtterance('');
   silentUtterance.volume = 0; // Make it silent
   
