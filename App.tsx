@@ -54,7 +54,6 @@ const App: React.FC = () => {
 
   const [isListening, setIsListening] = useState<boolean>(false);
   const [systemVoices, setSystemVoices] = useState<VoiceOption[]>([]);
-  const greetingSpokenRef = useRef(false);
 
   useEffect(() => {
       const loadVoices = async () => {
@@ -70,21 +69,6 @@ const App: React.FC = () => {
   useEffect(() => {
     document.documentElement.className = settings.theme;
   }, []);
-
-  useEffect(() => {
-    // Speak initial message if it's the only one and hasn't been spoken
-    if (messages.length === 1 && !greetingSpokenRef.current && activeView === ActiveView.CHAT) {
-      greetingSpokenRef.current = true;
-      setTimeout(() => speak(
-        messages[0].text, 
-        settings.voiceURI, 
-        settings.speechRate, 
-        settings.speechPitch,
-        () => setAvatarState('speaking'),
-        () => setAvatarState('idle')
-      ), 500);
-    }
-  }, [messages, settings, activeView, setAvatarState]);
 
   // Effect to apply theme when it changes in settings
   useEffect(() => {

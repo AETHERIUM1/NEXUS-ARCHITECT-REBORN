@@ -1,7 +1,8 @@
 import React, { useContext } from 'react';
 import { AppContext } from '../contexts/AppContext';
 import { ActiveView } from '../types';
-import { primeSpeechEngine } from '../services/speechService';
+import { speak } from '../services/speechService';
+import { INITIAL_MESSAGE } from '../constants';
 
 const FeatureCard: React.FC<{ icon: string; title: string; description: string; }> = ({ icon, title, description }) => (
     <div className="bg-slate-800/50 backdrop-blur-sm border border-slate-700/50 rounded-xl p-6 transform hover:scale-105 transition-transform duration-300 hover:border-cyan-400/50">
@@ -22,10 +23,20 @@ const ApplicationCard: React.FC<{ title: string; children: React.ReactNode }> = 
 
 
 export const LandingPage: React.FC = () => {
-    const { setActiveView } = useContext(AppContext);
+    const { setActiveView, settings, setAvatarState } = useContext(AppContext);
 
     const handleEnter = () => {
-        primeSpeechEngine(); // Explicitly prime the speech engine on the first user interaction.
+        // By calling `speak` directly inside the user's click handler, we ensure the browser
+        // grants permission for audio playback, definitively fixing the "not-allowed" error.
+        speak(
+            INITIAL_MESSAGE.text,
+            settings.voiceURI,
+            settings.speechRate,
+            settings.speechPitch,
+            () => setAvatarState('speaking'),
+            () => setAvatarState('idle'),
+            false // `false` prevents canceling other sounds and is crucial for the first utterance.
+        );
         setActiveView(ActiveView.CHAT);
     };
 

@@ -23,7 +23,7 @@ interface StreamChunk {
   functionCalls?: any[];
 }
 
-// Helper function to convert a file to a Gemini Part for image data
+// Helper function to convert a file to a Gemini Part for multimodal input.
 const fileToGenerativePart = async (file: File): Promise<any> => {
   const base64EncodedData = await new Promise<string>((resolve, reject) => {
     const reader = new FileReader();
@@ -94,16 +94,12 @@ export async function* getStreamingChatResponse(
         contents = contentsOverride;
     } else {
         let userPrompt = prompt;
-        const imageParts = [];
+        const fileParts = [];
         
-        const supportedImageTypes = ['image/png', 'image/jpeg', 'image/webp', 'image/heic', 'image/heif'];
-
         for (const file of files) {
             const fileType = file.type || '';
 
-            if (supportedImageTypes.includes(fileType)) {
-                imageParts.push(await fileToGenerativePart(file));
-            } else if (isTextBasedMimeType(fileType)) {
+            if (isTextBasedMimeType(fileType)) {
                 try {
                     const textContent = await file.text();
                     userPrompt += `\n\n--- Attached File: ${file.name} ---\n${textContent}\n--- End of File ---`;
@@ -112,12 +108,13 @@ export async function* getStreamingChatResponse(
                     userPrompt += `\n\n[Attached file: ${file.name} (${fileType}). Could not read file content.]`;
                 }
             } else {
-                // Catch-all for unsupported types, including application/octet-stream, pdf, videos, etc.
-                userPrompt += `\n\n[Attached file: ${file.name} (${fileType || 'unknown type'}, ${Math.round(file.size / 1024)} KB). This file type is not supported for direct processing. Acknowledge the file and explain that you can only analyze it based on its name and type.]`;
+                // For all other file types (images, pdfs, videos, etc.), convert them to a generative part.
+                // The model will attempt to process them based on their MIME type.
+                fileParts.push(await fileToGenerativePart(file));
             }
         }
 
-        const userParts: any[] = imageParts;
+        const userParts: any[] = fileParts;
         if (userPrompt) {
             userParts.unshift({ text: userPrompt });
         }

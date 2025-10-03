@@ -72,7 +72,7 @@ export function primeSpeechEngine() {
 
   // To be absolutely sure the engine is unlocked, we'll try speaking a silent utterance.
   // This is a common trick to satisfy autoplay policies.
-  const silentUtterance = new SpeechSynthesisUtterance('');
+  const silentUtterance = new SpeechSynthesisUtterance(' ');
   silentUtterance.volume = 0; // Make it silent
   
   // Speaking this silent utterance inside a user gesture (like the "Enter NEXUS" button click)
@@ -97,7 +97,8 @@ export function speak(
     rate: number = 1, 
     pitch: number = 1.1,
     onStart?: () => void,
-    onEnd?: () => void
+    onEnd?: () => void,
+    shouldCancel = true
 ): void {
     if (typeof window.speechSynthesis === 'undefined' || !text?.trim()) {
         onEnd?.();
@@ -140,18 +141,19 @@ export function speak(
         utterance.rate = rate;
         utterance.pitch = pitch;
 
-        // --- THE DEFINITIVE FIX FOR THE "INTERRUPTED" ERROR ---
-        // This race condition occurs when `speak()` is called before the engine has
-        // processed a `cancel()` command. The solution is to always cancel, then
-        // wait a moment before speaking.
+        // --- THE DEFINITIVE FIX FOR THE "INTERRUPTED" & "NOT-ALLOWED" ERRORS ---
+        // `cancel()` is crucial for interrupting prior speech. However, calling it before
+        // the engine is "unlocked" by a user gesture can cancel the priming action,
+        // causing a `not-allowed` error on the first real utterance.
+        if (shouldCancel) {
+            window.speechSynthesis.cancel();
+        }
         
-        // 1. Cancel anything currently in the speech queue.
-        window.speechSynthesis.cancel();
-        
-        // 2. Use a short, non-blocking delay to allow the 'cancel' command to complete.
+        // Use a short, non-blocking delay to allow the 'cancel' command to complete.
+        // This is only necessary when we are actually canceling.
         setTimeout(() => {
             window.speechSynthesis.speak(utterance);
-        }, 50);
+        }, shouldCancel ? 50 : 0);
     };
     
     initializeVoices().then(doSpeak).catch(err => {
