@@ -1,7 +1,13 @@
 import React, { createContext, useState, useCallback, useRef, useEffect } from 'react';
-import { Message, Settings, Conversation, ActiveView, AvatarState, MessageRole } from '../types';
+import { Message, Settings, Conversation, ActiveView, AvatarState, MessageRole, ModelOption } from '../types';
 import useLocalStorage from '../hooks/useLocalStorage';
 import { INITIAL_MESSAGE } from '../constants';
+import { getStoredModels, StoredModel } from '../services/modelStorage';
+
+export interface DiscoveredModel {
+  name: string;
+  size: string;
+}
 
 interface AppContextType {
   // State
@@ -20,8 +26,14 @@ interface AppContextType {
   activeView: ActiveView;
   avatarState: AvatarState;
   recentSearches: string[];
+  activeModel: string;
+  discoveredLocalModels: DiscoveredModel[];
+  allModels: ModelOption[];
 
   // Actions
+  setActiveModel: (id: string) => void;
+  setDiscoveredLocalModels: React.Dispatch<React.SetStateAction<DiscoveredModel[]>>;
+  useModelInChat: (modelName: string, provider?: 'ollama' | 'local' | 'huggingface') => void;
   addMessage: (message: Message) => void;
   updateLastMessage: (updates: Partial<Message>) => void;
   deleteMessage: (index: number) => void;
@@ -74,9 +86,15 @@ const defaultAppContext: AppContextType = {
   isCanvasModalOpen: false,
   stopGenerationRef: { current: false },
   uploadedFiles: [],
-  activeView: ActiveView.LANDING,
+  activeView: ActiveView.CHAT,
   avatarState: 'idle',
   recentSearches: [],
+  activeModel: 'gemini-3.5-flash',
+  discoveredLocalModels: [],
+  allModels: [],
+  setActiveModel: () => {},
+  setDiscoveredLocalModels: () => {},
+  useModelInChat: () => {},
   addMessage: () => {},
   updateLastMessage: () => {},
   deleteMessage: () => {},
@@ -127,9 +145,59 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isCanvasModalOpen, setCanvasModalOpen] = useState(false);
   const stopGenerationRef = useRef(false);
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const [activeView, setActiveView] = useLocalStorage<ActiveView>('nexus-active-view', ActiveView.LANDING);
+  const [activeView, setActiveView] = useLocalStorage<ActiveView>('nexus-active-view', ActiveView.CHAT);
   const [avatarState, setAvatarState] = useState<AvatarState>('idle');
   const [recentSearches, setRecentSearches] = useLocalStorage<string[]>('nexus-recent-searches', []);
+  const [activeModel, setActiveModel] = useLocalStorage<string>('nexus-active-model', 'gemini-3.5-flash');
+  const [discoveredLocalModels, setDiscoveredLocalModels] = useLocalStorage<DiscoveredModel[]>('nexus-discovered-local-models', [
+    { name: 'llama3:8b-instruct-q5_K_M', size: '5.1 GB' },
+    { name: 'mistral:7b-instruct-v0.2-q6_K', size: '5.2 GB' },
+    { name: 'codellama:13b-instruct-q4_K_M', size: '7.4 GB' },
+    { name: 'deepseek-coder:6.7b-instruct-q5_K_S', size: '4.7 GB' },
+  ]);
+  const [storedModels, setStoredModels] = useState<StoredModel[]>([]);
+
+  // Automatically migrate from LANDING to CHAT so user immediately lands on the chat interface with model controls
+  useEffect(() => {
+    if (activeView === ActiveView.LANDING) {
+      setActiveView(ActiveView.CHAT);
+    }
+  }, [activeView, setActiveView]);
+
+  useEffect(() => {
+    getStoredModels().then(models => setStoredModels(models)).catch(() => {});
+  }, []);
+
+  const allModels: ModelOption[] = [
+    { id: 'gemini-3.5-flash', name: 'NEXUS 3.5 Flash (Cloud Default)', provider: 'gemini', description: 'DeepMind multimodal reasoning & code generation' },
+    { id: 'gemini-3.1-pro', name: 'NEXUS 3.1 Pro (Deep Reasoning)', provider: 'gemini', description: 'Complex logic and multi-step synthesis' },
+    ...discoveredLocalModels.map(m => ({
+      id: m.name,
+      name: m.name,
+      provider: 'local' as const,
+      size: m.size,
+      description: `Discovered in Local AI Hub (${m.size})`,
+    })),
+    ...storedModels.filter(sm => !discoveredLocalModels.some(dm => dm.name === sm.name)).map(sm => ({
+      id: sm.name,
+      name: sm.name,
+      provider: sm.provider as any,
+      size: sm.size ? `${(sm.size / (1024*1024*1024)).toFixed(2)} GB` : undefined,
+      description: `Model Hub Pulled (${sm.provider.toUpperCase()})`,
+    })),
+  ];
+
+  const useModelInChat = useCallback((modelName: string, provider: 'ollama' | 'local' | 'huggingface' = 'local') => {
+    setActiveModel(modelName);
+    setActiveView(ActiveView.CHAT);
+    setMessages(prev => [
+      ...prev,
+      {
+        role: MessageRole.MODEL,
+        text: `⚡ **Active model set to: \`${modelName}\`** (${provider.toUpperCase()})\n\nResponses will now be routed through this model. You can switch models anytime using the model selector dropdown in the chat prompt bar.`,
+      }
+    ]);
+  }, [setActiveModel, setActiveView]);
 
   const addMessage = useCallback((message: Message) => {
     setMessages(prev => [...prev, message]);
@@ -281,6 +349,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     activeView,
     avatarState,
     recentSearches,
+    activeModel,
+    discoveredLocalModels,
+    allModels,
+    setActiveModel,
+    setDiscoveredLocalModels,
+    useModelInChat,
     addMessage,
     updateLastMessage,
     deleteMessage,

@@ -16,6 +16,7 @@ import { TranscendenceInterface } from './components/TranscendenceInterface';
 import { AgentsInterface } from './components/AgentsInterface';
 import { WorkspaceInterface } from './components/WorkspaceInterface';
 import { LocalAIInterface } from './components/LocalAIInterface';
+import { ModelPullerInterface } from './components/ModelPullerInterface';
 import { TravelAgentInterface } from './components/TravelAgentInterface';
 import { LandingPage } from './components/LandingPage';
 import { CameraCaptureModal } from './components/CameraCaptureModal';
@@ -49,6 +50,7 @@ const App: React.FC = () => {
     stopGenerationRef,
     uploadedFiles,
     clearUploadedFiles,
+    activeModel,
   } = useContext(AppContext);
   const { addTask, moveTask, listTasks } = useContext(WorkspaceContext);
 
@@ -180,13 +182,79 @@ const App: React.FC = () => {
               parts: [{ text: msg.text }]
           }));
 
+        const isLocalModel = activeModel !== 'gemini-3.5-flash' && activeModel !== 'gemini-3.1-pro';
+        let handledLocally = false;
+
+        if (isLocalModel) {
+          try {
+            updateLastMessage({ text: `Routing to local model \`${activeModel}\`...` });
+            const controller = new AbortController();
+            const timeout = setTimeout(() => controller.abort(), 3500);
+
+            const res = await fetch(`http://localhost:11434/api/chat`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                model: activeModel,
+                messages: [
+                  { role: 'system', content: systemPromptOverride || NEXUS_SYSTEM_PROMPT },
+                  ...history.map(h => ({ role: h.role, content: h.parts[0]?.text || '' })),
+                  { role: 'user', content: executedPrompt }
+                ],
+                stream: true,
+              }),
+              signal: controller.signal,
+            }).catch(() => null);
+
+            clearTimeout(timeout);
+
+            if (res && res.ok && res.body) {
+              handledLocally = true;
+              const reader = res.body.getReader();
+              const decoder = new TextDecoder();
+              let fullLocalText = `**[Local Model: \`${activeModel}\`]**\n\n`;
+              let buffer = '';
+
+              while (true) {
+                if (stopGenerationRef.current) break;
+                const { done, value } = await reader.read();
+                if (done) break;
+
+                buffer += decoder.decode(value, { stream: true });
+                const lines = buffer.split('\n');
+                buffer = lines.pop() || '';
+
+                for (const line of lines) {
+                  if (!line.trim()) continue;
+                  try {
+                    const parsed = JSON.parse(line);
+                    if (parsed.message?.content) {
+                      fullLocalText += parsed.message.content;
+                      updateLastMessage({ text: fullLocalText });
+                    }
+                  } catch {}
+                }
+              }
+              return;
+            }
+          } catch {
+            handledLocally = false;
+          }
+
+          if (!handledLocally) {
+            updateLastMessage({
+              text: `*ℹ️ Local server (:11434) not responding. Routing query for \`${activeModel}\` through NEXUS Architect engine...*\n\n`
+            });
+          }
+        }
+
         // --- TOOL USAGE LOGIC ---
         const workspaceKeywords = ['task', 'workspace', 'board', 'kanban', 'todo', 'in progress', 'done'];
         const useWorkspaceTools = workspaceKeywords.some(kw => lowerCasePrompt.includes(kw));
         
         const stream = getStreamingChatResponse(executedPrompt, systemPromptOverride || NEXUS_SYSTEM_PROMPT, history, isSearchEnabled, uploadedFiles, useWorkspaceTools ? workspaceTools : []);
         
-        let fullText = '';
+        let fullText = isLocalModel ? `**[Model Context: \`${activeModel}\`]**\n\n` : '';
         let finalSources: any[] = [];
         let functionCalls: any[] = [];
         
@@ -335,6 +403,7 @@ const App: React.FC = () => {
         [ActiveView.AGENTS]: <AgentsInterface />,
         [ActiveView.WORKSPACE]: <WorkspaceInterface />,
         [ActiveView.LOCAL_AI]: <LocalAIInterface />,
+        [ActiveView.MODEL_PULLER]: <ModelPullerInterface />,
         [ActiveView.DIAGNOSTICS]: <SystemDiagnostics />,
         [ActiveView.EVOLUTION]: <EvolutionInterface />,
         [ActiveView.ARCHITECTURE]: <ArchitectureMatrix />,
@@ -345,12 +414,12 @@ const App: React.FC = () => {
 
     return (
         <div className="flex flex-col flex-1 overflow-hidden">
-            {activeView === ActiveView.CHAT ? <ChatWindow /> : (
+            {activeView === ActiveView.CHAT || activeView === ActiveView.LANDING ? <ChatWindow /> : (
                 <div className="flex-1 overflow-y-auto">
                     {viewMap[activeView]}
                 </div>
             )}
-            {activeView === ActiveView.CHAT && (
+            {(activeView === ActiveView.CHAT || activeView === ActiveView.LANDING) && (
                 <div className="p-4 pt-2 border-t border-slate-300 dark:border-transparent">
                     {error && <div className="text-center text-sm mb-2 text-red-600 dark:text-glow-red">{error}</div>}
                     <PromptInput onSend={handleSendMessage} isListening={isListening} setIsListening={setIsListening} />
@@ -359,10 +428,6 @@ const App: React.FC = () => {
         </div>
     );
   };
-  
-  if (activeView === ActiveView.LANDING) {
-    return <LandingPage />;
-  }
 
   return (
     <div className="flex flex-col h-screen bg-white dark:bg-slate-900 font-sans text-glow-blue transition-colors duration-300">

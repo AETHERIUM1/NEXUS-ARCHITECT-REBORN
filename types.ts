@@ -64,6 +64,14 @@ export interface Conversation {
 
 export type AvatarState = 'idle' | 'processing' | 'listening' | 'speaking';
 
+export interface ModelOption {
+  id: string;
+  name: string;
+  provider: 'gemini' | 'ollama' | 'huggingface' | 'local';
+  size?: string;
+  description?: string;
+}
+
 export enum ActiveView {
   LANDING = 'LANDING',
   CHAT = 'CHAT',
@@ -78,6 +86,7 @@ export enum ActiveView {
   TEAMS = 'TEAMS',
   TRANSCENDENCE = 'TRANSCENDENCE',
   TRAVEL_AGENT = 'TRAVEL_AGENT',
+  MODEL_PULLER = 'MODEL_PULLER',
 }
 
 export interface TravelPreset {

@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef, useCallback, useLayoutEffect, useContext } from 'react';
 import { AppContext } from '../contexts/AppContext';
 import { PromptEnhancerDropdown } from './PromptEnhancerDropdown';
+import { ModelSelector } from './ModelSelector';
+import { ActiveView } from '../types';
 import { primeSpeechEngine } from '../services/speechService';
 
 interface PromptInputProps {
@@ -33,6 +35,7 @@ export const PromptInput: React.FC<PromptInputProps> = ({ onSend, isListening, s
     setUploadedFiles,
     setCameraModalOpen,
     setCanvasModalOpen,
+    setActiveView,
   } = useContext(AppContext);
   const [prompt, setPrompt] = useState('');
   const [micPermission, setMicPermission] = useState<MicPermissionStatus>('prompt');
@@ -184,6 +187,9 @@ export const PromptInput: React.FC<PromptInputProps> = ({ onSend, isListening, s
   return (
     <div className="max-w-4xl mx-auto">
         <div className="bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-lg shadow-lg transition-all duration-200 focus-within:ring-2 focus-within:ring-cyan-500 focus-within:border-cyan-500">
+            {/* Secondary Model Selector directly above text input field */}
+            <ModelSelector variant="input-bar" />
+
             {uploadedFiles.length > 0 && (
                 <div className="p-3 border-b border-slate-200 dark:border-slate-700">
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 max-h-32 overflow-y-auto">

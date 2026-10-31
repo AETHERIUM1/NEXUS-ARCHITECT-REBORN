@@ -80,6 +80,12 @@ export const FeaturesDropdown: React.FC = () => {
                 onClick={() => navigate(ActiveView.LOCAL_AI)}
               />
               <FeatureMenuButton
+                icon="🤗"
+                title="Pull Models (HF & Ollama)"
+                description="Search and pull GGUF models from Hugging Face & Ollama."
+                onClick={() => navigate(ActiveView.MODEL_PULLER)}
+              />
+              <FeatureMenuButton
                 icon="🏗️"
                 title="Builds Matrix"
                 description="Review all generated images and videos."

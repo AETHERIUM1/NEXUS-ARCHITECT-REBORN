@@ -5,7 +5,8 @@ import {
     TRAVEL_AGENT_SYSTEM_PROMPT, 
     TRAVEL_AGENT_PRESETS, 
     RECOMMEND_PLACE_FUNCTION_DECLARATION, 
-    GOOGLE_MAPS_EMBED_API_KEY 
+    GOOGLE_MAPS_EMBED_API_KEY,
+    NEXUS_TEXT_MODEL
 } from '../constants';
 import { LoadingIndicator } from './LoadingIndicator';
 import { TravelPreset } from '../types';
@@ -29,7 +30,7 @@ export const TravelAgentInterface: React.FC = () => {
         try {
             const ai = getAiInstance();
             const stream = await ai.models.generateContentStream({
-                model: 'gemini-2.5-flash',
+                model: NEXUS_TEXT_MODEL,
                 contents: [{ role: 'user', parts: [{ text: preset.prompt }] }],
                 config: {
                     systemInstruction: TRAVEL_AGENT_SYSTEM_PROMPT,

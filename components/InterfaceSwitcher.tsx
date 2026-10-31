@@ -8,6 +8,7 @@ const interfaceOptions = [
   { view: ActiveView.AGENTS, label: 'Agents', icon: '🤖' },
   { view: ActiveView.WORKSPACE, label: 'Workspace', icon: '📂' },
   { view: ActiveView.LOCAL_AI, label: 'Local AI Hub', icon: '💻' },
+  { view: ActiveView.MODEL_PULLER, label: 'Model Hub (HF & Ollama)', icon: '🤗' },
   { view: ActiveView.DIAGNOSTICS, label: 'System Diagnostics', icon: '📈' },
   { view: ActiveView.EVOLUTION, label: 'Evolution Interface', icon: '🧬' },
   { view: ActiveView.ARCHITECTURE, label: 'Architecture Matrix', icon: '🕸️' },

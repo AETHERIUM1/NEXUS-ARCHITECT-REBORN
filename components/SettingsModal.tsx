@@ -84,8 +84,8 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
                   className="w-full bg-slate-700 dark:bg-slate-700 light:bg-slate-200 border border-slate-600 dark:border-slate-600 light:border-slate-300 rounded-md py-2 px-3 text-white dark:text-white light:text-black focus:ring-2 focus:ring-cyan-500 focus:border-cyan-500"
                 >
                   <option value="">Browser Default</option>
-                  {systemVoices.map(voice => (
-                    <option key={voice.voiceURI} value={voice.voiceURI}>
+                  {systemVoices.map((voice, index) => (
+                    <option key={`${voice.voiceURI || 'voice'}-${voice.lang}-${index}`} value={voice.voiceURI}>
                       {voice.name} ({voice.lang})
                     </option>
                   ))}

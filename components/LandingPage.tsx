@@ -64,12 +64,21 @@ export const LandingPage: React.FC = () => {
                     <p className="max-w-3xl mx-auto text-lg md:text-xl text-slate-300 text-glow-blue mb-8">
                        Nexus represents a paradigm shift in AI, designed not just for interaction but for true system architecture and execution. It's a hyper-efficient creative partner designed to bring your most complex visions to life.
                     </p>
-                    <button
-                        onClick={handleEnter}
-                        className="bg-cyan-500 text-white font-bold text-lg px-10 py-4 rounded-full shadow-[0_0_20px_rgba(56,189,248,0.5)] hover:bg-cyan-400 hover:shadow-[0_0_30px_rgba(56,189,248,0.7)] transition-all duration-300 transform hover:scale-105"
-                    >
-                        Enter NEXUS
-                    </button>
+                    <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                      <button
+                          onClick={handleEnter}
+                          className="bg-cyan-500 text-white font-bold text-base sm:text-lg px-8 py-3.5 rounded-full shadow-[0_0_20px_rgba(56,189,248,0.5)] hover:bg-cyan-400 hover:shadow-[0_0_30px_rgba(56,189,248,0.7)] transition-all duration-300 transform hover:scale-105"
+                      >
+                          Enter NEXUS Architect
+                      </button>
+                      <button
+                          onClick={() => setActiveView(ActiveView.MODEL_PULLER)}
+                          className="bg-gradient-to-r from-amber-600 to-orange-600 text-white font-bold text-base sm:text-lg px-8 py-3.5 rounded-full shadow-[0_0_20px_rgba(245,158,11,0.5)] hover:from-amber-500 hover:to-orange-500 transition-all duration-300 transform hover:scale-105 flex items-center gap-2"
+                      >
+                          <span>🤗</span>
+                          <span>Open Model Hub (HF & Ollama)</span>
+                      </button>
+                    </div>
                 </div>
             </section>
 

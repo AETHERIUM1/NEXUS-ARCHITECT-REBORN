@@ -2,17 +2,27 @@ import { GoogleGenAI, GenerateVideosOperation, FunctionDeclaration } from "@goog
 import { NEXUS_TEXT_MODEL, NEXUS_IMAGE_MODEL, NEXUS_VIDEO_MODEL, PROMPT_ENHANCER_SYSTEM_PROMPT } from '../constants';
 import { History, GroundingSource, PromptEnhancerMode } from "../types";
 
-if (!process.env.API_KEY) {
-  throw new Error("API_KEY environment variable not set. Please configure it before running the application.");
-}
-
-const ai: GoogleGenAI = new GoogleGenAI({ apiKey: process.env.API_KEY });
+let ai: GoogleGenAI | null = null;
 
 /**
  * Gets the initialized GoogleGenAI instance.
  * @returns The GoogleGenAI instance.
  */
 export const getAiInstance = (): GoogleGenAI => {
+    if (!ai) {
+        const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
+        if (!apiKey) {
+            throw new Error("GEMINI_API_KEY environment variable not set. Please configure it in Settings > Secrets or in your environment variables before running the application.");
+        }
+        ai = new GoogleGenAI({
+            apiKey: apiKey,
+            httpOptions: {
+                headers: {
+                    'User-Agent': 'aistudio-build',
+                },
+            },
+        });
+    }
     return ai;
 };
 
@@ -199,9 +209,9 @@ export async function generateImage(prompt: string): Promise<string> {
 export async function generateVideo(prompt: string, onProgress: (message: string) => void, imageFile?: File): Promise<string> {
   try {
     const aiInstance = getAiInstance();
-    const apiKey = process.env.API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY || process.env.API_KEY;
     if (!apiKey) {
-      throw new Error("System configuration error: API Key is missing for video download.");
+      throw new Error("System configuration error: GEMINI_API_KEY is missing for video download.");
     }
     
     let imagePayload;

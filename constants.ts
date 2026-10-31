@@ -84,9 +84,9 @@ export const PROMPT_ENHANCER_SYSTEM_PROMPT = (mode: PromptEnhancerMode): string 
   return `${PROMPT_ENHANCER_BASE_INSTRUCTION} Mode: ${mode}. Instruction: ${PROMPT_ENHANCER_MODE_INSTRUCTIONS[mode]}`;
 };
 
-export const NEXUS_TEXT_MODEL = 'gemini-2.5-flash';
-export const NEXUS_IMAGE_MODEL = 'imagen-4.0-generate-001';
-export const NEXUS_VIDEO_MODEL = 'veo-2.0-generate-001';
+export const NEXUS_TEXT_MODEL = 'gemini-3.5-flash';
+export const NEXUS_IMAGE_MODEL = 'gemini-3.1-flash-image';
+export const NEXUS_VIDEO_MODEL = 'veo-3.1-lite-generate-preview';
 
 export const INITIAL_MESSAGE = {
   role: MessageRole.MODEL,
